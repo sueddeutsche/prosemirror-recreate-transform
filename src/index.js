@@ -105,28 +105,29 @@ function addSetNodeMarkup(tr, fromDoc, toDoc) {
 
 function addReplaceTextSteps(tr, op, ops, schema, beforeDoc, afterDoc) {
 
-    let fromDoc = schema.nodeFromJSON(beforeDoc),
-        toDoc = schema.nodeFromJSON(afterDoc),
-        start = toDoc.content.findDiffStart(fromDoc.content),
-        fromNode = fromDoc.nodeAt(start),
-        toNode = toDoc.nodeAt(start),
-        currentText = fromNode.text,
-        finalText = toNode.text
+    let finalText = op.value,
+        pathParts = op.path.split('/'),
+        obj = beforeDoc
+    pathParts.shift()
 
-    if (start != null) {
-        let dmp = new DiffMatchPatch(),
-            textPatches = dmp.patch_make(currentText, finalText)
-        textPatches.forEach(patch => {
-            [currentText] = dmp.patch_apply([patch], currentText)
-            let partialOp = Object.assign({}, op, {value: currentText}),
-                afterDoc = applyOperation(JSON.parse(JSON.stringify(beforeDoc)), partialOp).newDocument
-
-            addReplaceStep(tr, schema.nodeFromJSON(beforeDoc), schema.nodeFromJSON(afterDoc))
-            beforeDoc = afterDoc
-        })
-
-        console.log({textPatches})
+    while (pathParts.length) {
+        let pathPart = pathParts.shift()
+        obj = obj[pathPart]
     }
 
+    let currentText = obj,
+        dmp = new DiffMatchPatch(),
+        textPatches = dmp.patch_make(currentText, finalText)
+
+    textPatches.forEach(patch => {
+        [currentText] = dmp.patch_apply([patch], currentText)
+        let partialOp = Object.assign({}, op, {value: currentText}),
+            afterDoc = applyOperation(JSON.parse(JSON.stringify(beforeDoc)), partialOp).newDocument
+
+        addReplaceStep(tr, schema.nodeFromJSON(beforeDoc), schema.nodeFromJSON(afterDoc))
+        beforeDoc = afterDoc
+    })
+
+    console.log({textPatches})
 
 }
