@@ -42,6 +42,6 @@ window.view2 = new EditorView(document.querySelector("#editor2"), {
 })
 
 document.getElementById('compare').addEventListener('click', () => {
-    let tr = recreateSteps(view1.state, view2.state)
+    let tr = recreateSteps(view1.state.doc, view2.state.doc)
     console.log(tr)
 })
