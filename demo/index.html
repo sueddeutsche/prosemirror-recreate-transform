@@ -6,11 +6,35 @@
 	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
 	<title>Editor recreate steps demo</title>
     <link type="text/css" rel="stylesheet" href="../build/style.css" />
+	<style>
+	.insertion {
+		text-decoration: underline;
+	}
+	.deletion {
+		text-decoration: line-through;
+	}
+	.user-1, .user-1 > * {
+		background-color: rgba(0,0,255,0.4);
+	}
+	.user-2, .user-2 > * {
+		background-color: rgba(255,0,0,0.4);
+	}
+	span > p:first-child, span > p:last-child {
+		display: inline;
+	}
+	span > p:empty {
+		display: block;
+	}
+	</style>
 </head>
 
 <body>
     <h1>Instructions</h1>
-    <p>Open your developer console. Edit something in one or both of the editors. Look at the tr from the difference between the two in your console.</p>
+	<ol>
+    	<li>Make some changes in the two editors.</li>
+		<li>Hit the 'Merge' button</li>
+		<li>Notice how it's trying to merge and mark the changes from both editors.</li>
+	</ol>
     <div id="editor1"></div>
     <div id="editor2"></div>
     <div style="display: none" id="content">
@@ -20,14 +44,15 @@
         its styling from the menu. The basic schema
         supports <em>emphasis</em>, <strong>strong
         text</strong>, <a href="http://marijnhaverbeke.nl/blog">links</a>, <code>code
-        font</code>, and <img src="/img/smiley.png"> images.</p>
+        font</code>, and <img src="smiley.png" width="10px"> images.</p>
         <p>Block-level structure can be manipulated with key bindings (try
         ctrl-shift-2 to create a level 2 heading, or enter in an empty
         textblock to exit the parent block), or through the menu.</p>
         <p>Try using the “list” item in the menu to wrap this paragraph in
         a numbered list.</p>
     </div>
-    <button id="compare">Compare</button>
+    <button id="compare">Merge</button>
+	<div id="editor3"></div>
     <script src="index-build.js"></script>
 </body>
 </html>
