@@ -2,9 +2,8 @@ import {
     Transform
 } from "prosemirror-transform"
 import {
-    applyOperation,
-    compare
-} from "fast-json-patch"
+    applyPatch, createPatch
+} from "rfc6902"
 import DiffMatchPatch from "diff-match-patch"
 
 class RecreateSteps {
@@ -19,7 +18,7 @@ class RecreateSteps {
         // any mapping changes anyway.
         this.currentJSON = this.marklessDoc(this.fromDoc).toJSON()
         this.finalJSON = this.marklessDoc(this.toDoc).toJSON()
-        this.ops = compare(this.currentJSON, this.finalJSON)
+        this.ops = createPatch(this.currentJSON, this.finalJSON)
         console.log({ops: JSON.stringify(this.ops)})
     }
 
@@ -88,8 +87,9 @@ class RecreateSteps {
 
     // From http://prosemirror.net/examples/footnote/
     addReplaceStep(op) {
-        let afterStepJSON = applyOperation(JSON.parse(JSON.stringify(this.currentJSON)), op).newDocument,
-            fromDoc = this.schema.nodeFromJSON(this.currentJSON),
+        let afterStepJSON = JSON.parse(JSON.stringify(this.currentJSON))
+        applyPatch(afterStepJSON, [op])
+        let fromDoc = this.schema.nodeFromJSON(this.currentJSON),
             toDoc = this.schema.nodeFromJSON(afterStepJSON),
             start = toDoc.content.findDiffStart(fromDoc.content)
         if (start != null) {
@@ -117,7 +117,7 @@ class RecreateSteps {
             this.tr.setNodeMarkup(start, fromNode.type === toNode.type ? null : toNode.type, toNode.attrs, toNode.marks)
             this.currentJSON = this.marklessDoc(tr.doc).toJSON()
             // Setting the node markup may have invalidated more ops, so we calculate them again.
-            this.ops = compare(this.currentJSON, this.finalJSON)
+            this.ops = createPatch(this.currentJSON, this.finalJSON)
         }
     }
 
