@@ -19,7 +19,8 @@ import {
 } from "prosemirror-example-setup"
 
 import {
-    recreateSteps
+    recreateSteps,
+    mergeTransforms
 } from "../src"
 
 const mySchema = new Schema({
@@ -42,6 +43,9 @@ window.view2 = new EditorView(document.querySelector("#editor2"), {
 })
 
 document.getElementById('compare').addEventListener('click', () => {
-    let tr = recreateSteps(view1.state.doc, view2.state.doc)
-    console.log(tr)
+    let tr1 = recreateSteps(state.doc, view1.state.doc)
+    let tr2 = recreateSteps(state.doc, view2.state.doc)
+    console.log({tr1, tr2})
+    let tr = mergeTransforms(state.doc, tr1, tr2)
+    console.log({tr})
 })
