@@ -99,8 +99,15 @@ class RecreateSteps {
             } = toDoc.content.findDiffEnd(fromDoc.content)
             let overlap = start - Math.min(endA, endB)
             if (overlap > 0) {
-                endA += overlap
-                endB += overlap
+                if (
+                    fromDoc.resolve(start - overlap).depth < toDoc.resolve(endA + overlap).depth ||
+                    fromDoc.resolve(start - overlap).depth < fromDoc.resolve(endB + overlap).depth
+                ) {
+                    start -= overlap
+                } else {
+                    endA += overlap
+                    endB += overlap
+                }
             }
             this.tr.replace(start, endB, toDoc.slice(start, endA))
             this.currentJSON = afterStepJSON
