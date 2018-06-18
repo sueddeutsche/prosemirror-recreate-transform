@@ -100,8 +100,9 @@ class RecreateSteps {
             let overlap = start - Math.min(endA, endB)
             if (overlap > 0) {
                 if (
-                    fromDoc.resolve(start - overlap).depth < toDoc.resolve(endA + overlap).depth ||
-                    fromDoc.resolve(start - overlap).depth < fromDoc.resolve(endB + overlap).depth
+                    // If there is an overlap, there is some freedom of choise in how to calculate the start/end boundary.
+                    // for an inserted/removed slice. We choose the extreme with the lowest depth value.
+                    fromDoc.resolve(start - overlap).depth < toDoc.resolve(endA + overlap).depth
                 ) {
                     start -= overlap
                 } else {
