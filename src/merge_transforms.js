@@ -8,22 +8,43 @@ import {
 export function mergeTransforms(doc, tr1, tr2) {
     let conflicts = findConflicts(doc, tr1, tr2),
         tr = new Transform(doc),
-        changes = ChangeSet.create(doc)
-        
-    console.log({conflicts})
-    tr1.steps.forEach(step => tr.step(step))
-    changes = changes.addSteps(tr.doc, tr.mapping.maps, {user: 1})
-    tr2.steps.forEach(step => {
-        let mapped = step.map(tr1.mapping)
-        if (!mapped) {
-            console.log({error: 'step not mapped!', step})
-            return
-        }
-        tr.step(mapped)
-    })
-    changes = changes.addSteps(tr.doc, tr.mapping.maps.slice(tr1.steps.length), {user: 2})
+        changes = ChangeSet.create(doc),
+        conflictSteps1 = [...new Set(conflicts.map(conflict => conflict[0]))],
+        conflictSteps2 = [...new Set(conflicts.map(conflict => conflict[1]))],
+        removedSteps1Map = new Mapping(),
+        removedSteps2Map = new Mapping(),
+        conflictingSteps1 = [],
+        conflictingSteps2 = []
 
-    return {tr, changes}
+    tr1.steps.forEach((step, index) => {
+        if (conflictSteps1.includes(index)) {
+            removedSteps1Map.appendMap(step.invert(tr.doc).getMap())
+            conflictingSteps1.push([index, step])
+        } else {
+            let mapped = step.map(removedSteps1Map)
+            tr.step(mapped)
+            let stepMap = mapped.getMap()
+            conflictingSteps1 = conflictingSteps1.map(([id, step]) => [id, step.map(stepMap)])
+        }
+    })
+    let numberSteps1 = tr.steps.length
+    changes = changes.addSteps(tr.doc, tr.mapping.maps, {user: 1})
+    tr2.steps.forEach((step, index) => {
+        if (conflictSteps2.includes(index)) {
+            removedSteps2Map.appendMap(step.invert(tr.doc).getMap())
+            conflictingSteps2.push([index, step])
+        } else {
+            let mapped = step.map(tr.mapping.slice(0, numberSteps1)).map(removedSteps2Map)
+            tr.step(mapped)
+            let stepMap = mapped.getMap()
+            conflictingSteps1 = conflictingSteps1.map(([id, step]) => [id, step.map(stepMap)])
+            conflictingSteps2 = conflictingSteps2.map(([id, step]) => [id, step.map(stepMap)])
+        }
+
+    })
+    changes = changes.addSteps(tr.doc, tr.mapping.maps.slice(numberSteps1), {user: 2})
+
+    return {tr, changes, conflicts, conflictingSteps1, conflictingSteps2}
 }
 
 function findConflicts(doc, tr1, tr2) {
