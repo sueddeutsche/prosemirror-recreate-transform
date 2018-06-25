@@ -19,7 +19,6 @@ class RecreateSteps {
         this.currentJSON = this.marklessDoc(this.fromDoc).toJSON()
         this.finalJSON = this.marklessDoc(this.toDoc).toJSON()
         this.ops = createPatch(this.currentJSON, this.finalJSON)
-        console.log({ops: JSON.stringify(this.ops)})
     }
 
     init() {
