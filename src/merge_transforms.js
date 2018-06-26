@@ -19,6 +19,7 @@ export function mergeTransforms(doc, tr1, tr2) {
     tr1.steps.forEach((step, index) => {
         let mapped = step.map(removedSteps1Map)
         if (!mapped) {
+            // TODO: Handle cases where conflicting content is being styled by a later step
             return
         } else if (conflictSteps1IDs.includes(index)) {
             removedSteps1Map.appendMap(mapped.invert(tr.doc).getMap())

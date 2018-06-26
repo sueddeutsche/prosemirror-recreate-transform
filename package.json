@@ -3,11 +3,14 @@
     "version": "0.1.0",
     "description": "Find changes between two prosemirror documents without access to the steps.",
     "main": "dist/index.js",
+    "module": "src/index.js",
     "scripts": {
         "test": "echo \"Error: no test specified\" && exit 1",
-        "build": "npm run build_js && npm run build_css",
-        "build_js": "rollup demo/index.js -c -f iife -o demo/index-build.js",
-        "build_css": "cat node_modules/prosemirror-example-setup/style/style.css node_modules/prosemirror-gapcursor/style/gapcursor.css node_modules/prosemirror-menu/style/menu.css > build/style.css"
+        "build": "npm run build_js && npm run build_demo_js && npm run build_css",
+        "build_demo_js": "rollup demo/index.js -c -f iife -o demo/index-build.js",
+        "build_js": "rollup src/index.js -c -f cjs -o dist/index.js",
+        "build_css": "cat node_modules/prosemirror-example-setup/style/style.css node_modules/prosemirror-gapcursor/style/gapcursor.css node_modules/prosemirror-menu/style/menu.css > dist/style.css",
+        "prepare": "npm run build"
     },
     "keywords": [
         "prosemirror",
