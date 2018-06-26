@@ -9,8 +9,8 @@ export function mergeTransforms(doc, tr1, tr2) {
     let conflicts = findConflicts(doc, tr1, tr2),
         tr = new Transform(doc),
         changes = ChangeSet.create(doc),
-        conflictSteps1 = [...new Set(conflicts.map(conflict => conflict[0]))],
-        conflictSteps2 = [...new Set(conflicts.map(conflict => conflict[1]))],
+        conflictSteps1IDs = [...new Set(conflicts.map(conflict => conflict[0]))],
+        conflictSteps2IDs = [...new Set(conflicts.map(conflict => conflict[1]))],
         removedSteps1Map = new Mapping(),
         removedSteps2Map = new Mapping(),
         conflictingSteps1 = [],
@@ -18,7 +18,9 @@ export function mergeTransforms(doc, tr1, tr2) {
 
     tr1.steps.forEach((step, index) => {
         let mapped = step.map(removedSteps1Map)
-        if (conflictSteps1.includes(index)) {
+        if (!mapped) {
+            return
+        } else if (conflictSteps1IDs.includes(index)) {
             removedSteps1Map.appendMap(mapped.invert(tr.doc).getMap())
             conflictingSteps1.push([index, mapped])
         } else {
@@ -31,7 +33,7 @@ export function mergeTransforms(doc, tr1, tr2) {
     changes = changes.addSteps(tr.doc, tr.mapping.maps, {user: 1})
     tr2.steps.forEach((step, index) => {
         let mapped = step.map(tr.mapping.slice(0, numberSteps1)).map(removedSteps2Map)
-        if (conflictSteps2.includes(index)) {
+        if (conflictSteps2IDs.includes(index)) {
             removedSteps2Map.appendMap(mapped.invert(tr.doc).getMap())
             conflictingSteps2.push([index, mapped])
         } else {

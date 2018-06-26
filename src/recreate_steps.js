@@ -122,7 +122,7 @@ class RecreateSteps {
             toNode = toDoc.nodeAt(start)
         if (start != null) {
             this.tr.setNodeMarkup(start, fromNode.type === toNode.type ? null : toNode.type, toNode.attrs, toNode.marks)
-            this.currentJSON = this.marklessDoc(tr.doc).toJSON()
+            this.currentJSON = this.marklessDoc(this.tr.doc).toJSON()
             // Setting the node markup may have invalidated more ops, so we calculate them again.
             this.ops = createPatch(this.currentJSON, this.finalJSON)
         }

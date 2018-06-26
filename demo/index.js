@@ -70,7 +70,7 @@ document.getElementById('compare').addEventListener('click', () => {
         )
 
         decos = decos.add(tr.doc, [
-            Decoration.widget(deletion.pos, dom, {})
+            Decoration.widget(deletion.pos, dom, {marks: []})
         ])
     })
 
@@ -83,7 +83,7 @@ document.getElementById('compare').addEventListener('click', () => {
         )
 
         decos = decos.add(tr.doc, [
-            Decoration.widget(insertion.pos, dom, {})
+            Decoration.widget(insertion.pos, dom, {marks: []})
         ])
     })
 
