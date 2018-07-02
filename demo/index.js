@@ -50,11 +50,11 @@ window.view2 = new EditorView(document.querySelector("#editor2"), {
 })
 
 document.getElementById('compare').addEventListener('click', () => {
-    let tr1 = recreateSteps(state.doc, view1.state.doc)
-    let tr2 = recreateSteps(state.doc, view2.state.doc)
-    let {tr, changes, conflicts, conflictingSteps1, conflictingSteps2, conflictingChanges} = mergeTransforms(state.doc, tr1, tr2)
-    console.log({tr, changes, conflicts, conflictingSteps1, conflictingSteps2, conflictingChanges})
-    let decos = DecorationSet.empty
+    let tr1 = recreateSteps(state.doc, view1.state.doc),
+        tr2 = recreateSteps(state.doc, view2.state.doc),
+        {tr, changes, conflicts, conflictingSteps1, conflictingSteps2, conflictingChanges} = mergeTransforms(tr1, tr2),
+        decos = DecorationSet.empty
+        
     changes.inserted.forEach(insertion => {
         decos = decos.add(tr.doc, [
             Decoration.inline(insertion.from, insertion.to, {class: `automerged insertion user-${insertion.data.user}`}, {})
