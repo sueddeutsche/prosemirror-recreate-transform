@@ -1,3 +1,4 @@
 node_modules/
-demo/index-build.js
+demo/merge/index-build.js
+demo/history/index-build.js
 dist/

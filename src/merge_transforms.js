@@ -84,7 +84,7 @@ function findConflicts(tr1, tr2) {
         conflicts = []
     changes1.deleted.forEach(deleted => {
         changes2.inserted.forEach(inserted => {
-            if (inserted.pos > deleted.from && inserted.pos < deleted.to) {
+            if (inserted.pos >= deleted.from && inserted.pos <= deleted.to) {
                 conflicts.push([deleted.data.step, inserted.data.step])
             }
         })
@@ -92,11 +92,33 @@ function findConflicts(tr1, tr2) {
 
     changes2.deleted.forEach(deleted => {
         changes1.inserted.forEach(inserted => {
-            if (inserted.pos > deleted.from && inserted.pos < deleted.to) {
+            if (inserted.pos >= deleted.from && inserted.pos <= deleted.to) {
                 conflicts.push([inserted.data.step, deleted.data.step])
             }
         })
     })
+
+    changes1.inserted.forEach(inserted1 => {
+        changes2.inserted.forEach(inserted2 => {
+            if (inserted1.pos === inserted2.pos) {
+                conflicts.push([inserted1.data.step, inserted2.data.step])
+            }
+        })
+    })
+
+    changes1.deleted.forEach(deleted1 => {
+        changes2.deleted.forEach(deleted2 => {
+            if (
+                (deleted1.from >= deleted2.from && deleted1.from <= deleted2.to) ||
+                (deleted1.to >= deleted2.from && deleted1.to <= deleted2.to) ||
+                (deleted1.from <= deleted2.from && deleted1.to >= deleted2.to) ||
+                (deleted2.from <= deleted1.from && deleted2.to >= deleted1.to)
+            ) {
+                conflicts.push([deleted1.data.step, deleted2.data.step])
+            }
+        })
+    })
+
     return conflicts
 }
 
@@ -117,8 +139,11 @@ function findContentChanges(tr) {
 
 function createConflictingChanges(tr1Conflict, tr2Conflict) {
     let doc = tr1Conflict.steps.length ? tr1Conflict.docs[0] : tr1Conflict.doc,
-        conflictingSteps1 = tr1Conflict.steps.map((step, index) => [index, step.map(new Mapping(tr1Conflict.mapping.maps.slice(0, index)).invert())]),
-        conflictingSteps2 = tr2Conflict.steps.map((step, index) => [index, step.map(new Mapping(tr2Conflict.mapping.maps.slice(0, index)).invert())]),
+        // We map the steps so that the positions are all at the level of the current
+        // doc as there is no guarantee for the order in which they will be applied.
+        // If one of them is being applied, the other ones will have to be remapped.
+        conflictingSteps1 = tr1Conflict.steps.map((step, index) => step.map(new Mapping(tr1Conflict.mapping.maps.slice(0, index)).invert())),
+        conflictingSteps2 = tr2Conflict.steps.map((step, index) => step.map(new Mapping(tr2Conflict.mapping.maps.slice(0, index)).invert())),
         inserted = [],
         deleted = [],
         iter = [
@@ -127,11 +152,11 @@ function createConflictingChanges(tr1Conflict, tr2Conflict) {
         ]
 
     iter.forEach(({steps, user}) =>
-        steps.forEach(([id, step]) => {
+        steps.forEach((step, index) => {
             let stepResult = step.apply(doc)
             // We need the potential changes if this step was to be applied. We find
             // the inversion of the change so that we can place it in the current doc.
-            let invertedStepChanges = ChangeSet.create(stepResult.doc).addSteps(doc, [step.invert(doc).getMap()], {step: id, user})
+            let invertedStepChanges = ChangeSet.create(stepResult.doc).addSteps(doc, [step.invert(doc).getMap()], {step: index, user})
             deleted = deleted.concat(invertedStepChanges.inserted.map(inserted => ({from: inserted.from, to: inserted.to, data: inserted.data})))
             inserted = inserted.concat(invertedStepChanges.deleted.map(deleted => ({pos: deleted.pos, slice: deleted.slice, data: deleted.data})))
         })

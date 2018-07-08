@@ -28,7 +28,7 @@ import {
 import {
     recreateSteps,
     mergeTransforms
-} from "../src"
+} from "../../src"
 
 const mySchema = new Schema({
     nodes: addListNodes(schema.spec.nodes, "paragraph block*", "block"),
@@ -54,7 +54,7 @@ document.getElementById('compare').addEventListener('click', () => {
         tr2 = recreateSteps(state.doc, view2.state.doc),
         {tr, changes, conflicts, conflictingSteps1, conflictingSteps2, conflictingChanges} = mergeTransforms(tr1, tr2),
         decos = DecorationSet.empty
-        
+
     changes.inserted.forEach(insertion => {
         decos = decos.add(tr.doc, [
             Decoration.inline(insertion.from, insertion.to, {class: `automerged insertion user-${insertion.data.user}`}, {})
