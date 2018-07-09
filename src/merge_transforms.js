@@ -23,12 +23,45 @@ export function mergeTransforms(tr1, tr2) {
     return {tr, changes, conflicts, conflictingSteps1, conflictingSteps2, conflictingChanges: {inserted, deleted}}
 }
 
-export function applyConflictStep(user, index, doc, conflicts, conflictingSteps1, conflictingSteps2, conflictingChanges) {
+export function rebaseMergedTransform(user, {tr, changes, conflicts, conflictingSteps1, conflictingSteps2}) {
+    let conflictingSteps = user === 1 ? origConflictingSteps1 : origConflictingSteps2,
+        otherUser = user === 1 ? 2 : 1,
+        otherConflictingSteps = user === 1 ? origConflictingSteps2 : origConflictingSteps1,
+        {tr: addedTr, changes: combinedChanges} = applyAllConflictingSteps(tr.doc, changes, user, conflictingSteps),
+        {doc: conflictingDoc} = applyAllConflictingSteps(tr.doc, changes, otherUser, otherConflictingSteps)
+
+    addedTr.steps.forEach(step => tr.step(step))
+    changes = combinedChanges
+
+    let trConflict = recreateSteps(tr.doc, conflictingDoc, false),
+        {
+            inserted,
+            deleted,
+            conflictingSteps1: newConflictingSteps1,
+            conflictingSteps2: newConflictingSteps2
+        } = createConflictingChanges(
+            user===1 ? trConflict : [],
+            user===2 ? trConflict : []
+        )
+
+    return {
+        tr,
+        changes,
+        conflicts: [],
+        conflictingSteps1: newConflictingSteps1,
+        conflictingSteps2: newConflictingSteps2,
+        conflictingChanges: {inserted, deleted}
+    }
+}
+
+export function applyConflictingStep(user, index, doc, changes, conflicts, conflictingSteps1, conflictingSteps2, conflictingChanges) {
     let step = user === 1 ?
             conflictingSteps1.find(([conflictIndex, conflictStep]) => conflictIndex === index)[1] :
             conflictingSteps2.find(([conflictIndex, conflictStep]) => conflictIndex === index)[1],
         stepResult = step.apply(doc),
         map = step.getMap()
+
+    changes = changes.addSteps(stepResult.doc, [map], {user})
 
     if (user === 1) {
         conflictingSteps1 = conflictingSteps1.map(
@@ -53,19 +86,22 @@ export function applyConflictStep(user, index, doc, conflicts, conflictingSteps1
     }
 
 
-    return {doc, conflicts, conflictingSteps1, conflictingSteps2, conflictingChanges}
+    return {doc, changes, conflicts, conflictingSteps1, conflictingSteps2, conflictingChanges}
 }
 
-function applyAllConflictSteps(doc, conflictingSteps) {
-    let steps = conflictingSteps.map(([index, step]) => step)
+function applyAllConflictingSteps(doc, changes, user, conflictingSteps) {
+    let steps = conflictingSteps.map(([index, step]) => step),
+        tr = new Transform(doc)
     while(steps.length) {
         let step = steps.pop(),
             stepResult = step.apply(doc),
             map = step.getMap()
+        tr.step(step)
         doc = stepResult.doc
         steps = steps.map(step => step.map(map))
+        changes = changes.addSteps(doc, [map], {user})
     }
-    return doc
+    return {tr, doc, changes}
 }
 
 function mapTr(tr, map) {
