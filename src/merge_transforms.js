@@ -23,6 +23,51 @@ export function mergeTransforms(tr1, tr2) {
     return {tr, changes, conflicts, conflictingSteps1, conflictingSteps2, conflictingChanges: {inserted, deleted}}
 }
 
+export function applyConflictStep(user, index, doc, conflicts, conflictingSteps1, conflictingSteps2, conflictingChanges) {
+    let step = user === 1 ?
+            conflictingSteps1.find(([conflictIndex, conflictStep]) => conflictIndex === index)[1] :
+            conflictingSteps2.find(([conflictIndex, conflictStep]) => conflictIndex === index)[1],
+        stepResult = step.apply(doc),
+        map = step.getMap()
+
+    if (user === 1) {
+        conflictingSteps1 = conflictingSteps1.map(
+            ([conflictIndex, conflictStep]) => conflictIndex === index ? false : [conflictIndex, conflictStep.map(map)]
+        ).filter(step => step)
+        conflicts = conflicts.filter(conflict => conflict[0] !== index)
+    } else {
+        conflictingSteps2 = conflictingSteps2.map(
+            ([conflictIndex, conflictStep]) => conflictIndex === index ? false : [conflictIndex, conflictStep.map(map)]
+        ).filter(step => step)
+        conflicts = conflicts.filter(conflict => conflict[1] !== index)
+    }
+
+    doc = stepResult.doc
+    conflictingChanges = {
+        inserted: conflictingChanges.inserted.filter(inserted => inserted.data.user !== user || inserted.data.index !== index).map(
+            inserted => ({data: inserted.data, slice: inserted.slice, pos: map.map(inserted.pos)})
+        ),
+        deleted: conflictingChanges.deleted.filter(deleted => deleted.data.user !== user || deleted.data.index !== index).map(
+            deleted => ({data: deleted.data, from: map.map(deleted.from), to: map.map(deleted.to)})
+        )
+    }
+
+
+    return {doc, conflicts, conflictingSteps1, conflictingSteps2, conflictingChanges}
+}
+
+function applyAllConflictSteps(doc, conflictingSteps) {
+    let steps = conflictingSteps.map(([index, step]) => step)
+    while(steps.length) {
+        let step = steps.pop(),
+            stepResult = step.apply(doc),
+            map = step.getMap()
+        doc = stepResult.doc
+        steps = steps.map(step => step.map(map))
+    }
+    return doc
+}
+
 function mapTr(tr, map) {
     if (!tr.steps.length) {
         return tr
@@ -142,8 +187,8 @@ function createConflictingChanges(tr1Conflict, tr2Conflict) {
         // We map the steps so that the positions are all at the level of the current
         // doc as there is no guarantee for the order in which they will be applied.
         // If one of them is being applied, the other ones will have to be remapped.
-        conflictingSteps1 = tr1Conflict.steps.map((step, index) => step.map(new Mapping(tr1Conflict.mapping.maps.slice(0, index)).invert())),
-        conflictingSteps2 = tr2Conflict.steps.map((step, index) => step.map(new Mapping(tr2Conflict.mapping.maps.slice(0, index)).invert())),
+        conflictingSteps1 = tr1Conflict.steps.map((step, index) => [index, step.map(new Mapping(tr1Conflict.mapping.maps.slice(0, index)).invert())]),
+        conflictingSteps2 = tr2Conflict.steps.map((step, index) => [index, step.map(new Mapping(tr2Conflict.mapping.maps.slice(0, index)).invert())]),
         inserted = [],
         deleted = [],
         iter = [
@@ -152,11 +197,11 @@ function createConflictingChanges(tr1Conflict, tr2Conflict) {
         ]
 
     iter.forEach(({steps, user}) =>
-        steps.forEach((step, index) => {
+        steps.forEach(([index, step]) => {
             let stepResult = step.apply(doc)
             // We need the potential changes if this step was to be applied. We find
             // the inversion of the change so that we can place it in the current doc.
-            let invertedStepChanges = ChangeSet.create(stepResult.doc).addSteps(doc, [step.invert(doc).getMap()], {step: index, user})
+            let invertedStepChanges = ChangeSet.create(stepResult.doc).addSteps(doc, [step.invert(doc).getMap()], {index, user})
             deleted = deleted.concat(invertedStepChanges.inserted.map(inserted => ({from: inserted.from, to: inserted.to, data: inserted.data})))
             inserted = inserted.concat(invertedStepChanges.deleted.map(deleted => ({pos: deleted.pos, slice: deleted.slice, data: deleted.data})))
         })
