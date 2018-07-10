@@ -2,5 +2,6 @@ export {
     recreateSteps
 } from "./recreate_steps"
 export {
-    mergeTransforms
+    mergeTransforms,
+    rebaseMergedTransform
 } from "./merge_transforms"

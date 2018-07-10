@@ -13,17 +13,17 @@
 	.deletion {
 		text-decoration: line-through;
 	}
-	.proposed.user-1, .proposed.user-1 > * {
-		background-color: rgba(0,0,255,0.8);
-	}
-	.proposed.user-2, .proposed.user-2 > * {
-		background-color: rgba(255,0,0,0.8);
-	}
 	.automerged.user-1, .automerged.user-1 > * {
 		background-color: rgba(0,0,255,0.2);
 	}
 	.automerged.user-2, .automerged.user-2 > * {
 		background-color: rgba(255,0,0,0.2);
+	}
+	.proposed.user-1, .proposed.user-1 > * {
+		background-color: rgba(0,0,255,0.8);
+	}
+	.proposed.user-2, .proposed.user-2 > * {
+		background-color: rgba(255,0,0,0.8);
 	}
 	span > p:first-child, span > p:last-child {
 		display: inline;
@@ -58,6 +58,10 @@
         a numbered list.</p>
     </div>
     <button id="compare">Merge</button>
+	<input type="checkbox" id="rebase" checked />
+	<label for="rebase">Rebase</label>
+	<input type="checkbox" id="automerge_show" />
+	<label for="automerge_show">Show automerged changes</label>
 	<div id="editor3"></div>
     <script src="index-build.js"></script>
 </body>

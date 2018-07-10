@@ -27,7 +27,8 @@ import {
 
 import {
     recreateSteps,
-    mergeTransforms
+    mergeTransforms,
+    rebaseMergedTransform
 } from "../../src"
 
 const mySchema = new Schema({
@@ -52,27 +53,31 @@ window.view2 = new EditorView(document.querySelector("#editor2"), {
 document.getElementById('compare').addEventListener('click', () => {
     let tr1 = recreateSteps(state.doc, view1.state.doc),
         tr2 = recreateSteps(state.doc, view2.state.doc),
-        {tr, changes, conflicts, conflictingSteps1, conflictingSteps2, conflictingChanges} = mergeTransforms(tr1, tr2),
-        decos = DecorationSet.empty
+        decos = DecorationSet.empty,
+        {tr, changes, conflicts, conflictingSteps1, conflictingSteps2, conflictingChanges} = document.getElementById('rebase').checked ?
+            rebaseMergedTransform(1, mergeTransforms(tr1, tr2)) :
+            mergeTransforms(tr1, tr2)
 
-    changes.inserted.forEach(insertion => {
-        decos = decos.add(tr.doc, [
-            Decoration.inline(insertion.from, insertion.to, {class: `automerged insertion user-${insertion.data.user}`}, {})
-        ])
-    })
-    changes.deleted.forEach(deletion => {
+    if (document.getElementById('automerge_show').checked) {
+        changes.inserted.forEach(insertion => {
+            decos = decos.add(tr.doc, [
+                Decoration.inline(insertion.from, insertion.to, {class: `automerged insertion user-${insertion.data.user}`}, {})
+            ])
+        })
+        changes.deleted.forEach(deletion => {
 
-        let dom = document.createElement('span')
-        dom.setAttribute('class', `automerged deletion user-${deletion.data.user}`)
+            let dom = document.createElement('span')
+            dom.setAttribute('class', `automerged deletion user-${deletion.data.user}`)
 
-        dom.appendChild(
-            DOMSerializer.fromSchema(mySchema).serializeFragment(deletion.slice.content)
-        )
+            dom.appendChild(
+                DOMSerializer.fromSchema(mySchema).serializeFragment(deletion.slice.content)
+            )
 
-        decos = decos.add(tr.doc, [
-            Decoration.widget(deletion.pos, dom, {marks: []})
-        ])
-    })
+            decos = decos.add(tr.doc, [
+                Decoration.widget(deletion.pos, dom, {marks: []})
+            ])
+        })
+    }
 
     conflictingChanges.inserted.forEach(insertion => {
         let dom = document.createElement('span')
