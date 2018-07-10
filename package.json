@@ -1,7 +1,7 @@
 {
-    "name": "prosemirror-findchanges",
+    "name": "prosemirror-threeway-merge",
     "version": "0.1.0",
-    "description": "Find changes between two prosemirror documents without access to the steps.",
+    "description": "Find and merge changes between two prosemirror documents without access to the steps.",
     "main": "dist/index.js",
     "module": "src/index.js",
     "scripts": {
@@ -18,7 +18,9 @@
     "keywords": [
         "prosemirror",
         "change",
-        "tracking"
+        "tracking",
+        "merging",
+        "diffing"
     ],
     "author": "Johannes Wilm",
     "license": "???",

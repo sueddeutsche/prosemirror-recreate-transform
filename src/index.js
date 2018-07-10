@@ -1,7 +1,7 @@
 export {
     recreateTransform
-} from "./recreate_steps"
+} from "./recreate"
 export {
     mergeTransforms,
     applyConflictingStep
-} from "./merge_transforms"
+} from "./merge"

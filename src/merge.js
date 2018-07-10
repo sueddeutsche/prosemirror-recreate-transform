@@ -6,7 +6,7 @@ import {
 } from "prosemirror-changeset"
 import {
     recreateTransform
-} from "./recreate_steps"
+} from "./recreate"
 
 export function mergeTransforms(tr1, tr2, rebase = false) {
         // Create conflicting steps. Make sure the steps are only ReplaceSteps so they can easily
