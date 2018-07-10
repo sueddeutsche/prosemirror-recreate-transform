@@ -26,9 +26,8 @@ import {
 } from "prosemirror-view"
 
 import {
-    recreateSteps,
-    mergeTransforms,
-    rebaseMergedTransform
+    recreateTransform,
+    mergeTransforms
 } from "../../src"
 
 const mySchema = new Schema({
@@ -51,12 +50,11 @@ window.view2 = new EditorView(document.querySelector("#editor2"), {
 })
 
 document.getElementById('compare').addEventListener('click', () => {
-    let tr1 = recreateSteps(state.doc, view1.state.doc),
-        tr2 = recreateSteps(state.doc, view2.state.doc),
+    let tr1 = recreateTransform(state.doc, view1.state.doc),
+        tr2 = recreateTransform(state.doc, view2.state.doc),
         decos = DecorationSet.empty,
-        {tr, changes, conflicts, conflictingSteps1, conflictingSteps2, conflictingChanges} = document.getElementById('rebase').checked ?
-            rebaseMergedTransform(1, mergeTransforms(tr1, tr2)) :
-            mergeTransforms(tr1, tr2)
+        {tr, changes, conflicts, conflictingSteps1, conflictingSteps2, conflictingChanges} =
+            mergeTransforms(tr1, tr2, document.getElementById('rebase').checked)
 
     if (document.getElementById('automerge_show').checked) {
         changes.inserted.forEach(insertion => {

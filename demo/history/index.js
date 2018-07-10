@@ -28,7 +28,7 @@ import {
     ChangeSet
 } from "prosemirror-changeset"
 import {
-    recreateSteps
+    recreateTransform
 } from "../../src"
 
 const mySchema = new Schema({
@@ -50,7 +50,7 @@ window.view = new EditorView(document.querySelector("#editor"), {
 window.historyViews = []
 
 document.getElementById('make_diff').addEventListener('click', () => {
-    let tr = recreateSteps(state.doc, view.state.doc),
+    let tr = recreateTransform(state.doc, view.state.doc),
         decos = DecorationSet.empty,
         changes = ChangeSet.create(state.doc).addSteps(tr.doc, tr.mapping.maps)
 

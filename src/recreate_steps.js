@@ -32,7 +32,7 @@ function getReplaceStep(fromDoc, toDoc) {
     return new ReplaceStep(start, endB, toDoc.slice(start, endA))
 }
 
-class RecreateSteps {
+class RecreateTransform {
     constructor(fromDoc, toDoc, complexSteps) {
         this.fromDoc = fromDoc
         this.toDoc = toDoc
@@ -197,7 +197,7 @@ class RecreateSteps {
 
 }
 
-export function recreateSteps(fromDoc, toDoc, complexSteps = true) {
-    let recreator = new RecreateSteps(fromDoc, toDoc, complexSteps)
+export function recreateTransform(fromDoc, toDoc, complexSteps = true) {
+    let recreator = new RecreateTransform(fromDoc, toDoc, complexSteps)
     return recreator.init()
 }

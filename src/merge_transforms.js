@@ -5,51 +5,65 @@ import {
     ChangeSet
 } from "prosemirror-changeset"
 import {
-    recreateSteps
+    recreateTransform
 } from "./recreate_steps"
 
-
-export function mergeTransforms(tr1, tr2) {
+export function mergeTransforms(tr1, tr2, rebase = false) {
         // Create conflicting steps. Make sure the steps are only ReplaceSteps so they can easily
         // be presented as alternatives to the user.
-    let {tr, changes, tr1NoConflicts, tr2NoConflicts} = automergeTrs(tr1, tr2),
+    let {tr, changes, tr1NoConflicts, tr2NoConflicts} = automergeTransforms(tr1, tr2),
+
         // find TRs that move from the docs that come out of the non-conflicting docs to the actual final docs, then map
         // them to the ending of tr.
-        tr1Conflict = mapTr(mapTr(recreateSteps(tr1NoConflicts.doc, tr1.doc, false), tr1NoConflicts.mapping.invert()), tr.mapping),
-        tr2Conflict = mapTr(mapTr(recreateSteps(tr2NoConflicts.doc, tr2.doc, false), tr2NoConflicts.mapping.invert()), tr.mapping),
-        conflicts = findConflicts(tr1Conflict, tr2Conflict),
-        {inserted, deleted, conflictingSteps1, conflictingSteps2} = createConflictingChanges(tr1Conflict, tr2Conflict)
+        tr1Conflict = mapTransform(
+            recreateTransform(
+                tr1NoConflicts.doc,
+                tr1.doc,
+                false
+            ),
+            tr.doc,
+            new Mapping(tr1NoConflicts.mapping.invert().maps.concat(tr.mapping.maps))
+        ),
+        tr2Conflict = mapTransform(
+            recreateTransform(
+                tr2NoConflicts.doc,
+                tr2.doc,
+                false
+            ),
+            tr.doc,
+            new Mapping(tr2NoConflicts.mapping.invert().maps.concat(tr.mapping.maps))
+        )
 
-    return {tr, changes, conflicts, conflictingSteps1, conflictingSteps2, conflictingChanges: {inserted, deleted}}
+    if (rebase) {
+        // rebase on tr1.doc -- makes all changes relative to user 1
+        return rebaseMergedTransform(tr1.doc, tr1Conflict.doc, tr2Conflict.doc)
+    } else {
+            let conflicts = findConflicts(tr1Conflict, tr2Conflict),
+                {inserted, deleted, conflictingSteps1, conflictingSteps2} = createConflictingChanges(tr1Conflict, tr2Conflict)
+
+        return {tr, changes, conflicts, conflictingSteps1, conflictingSteps2, conflictingChanges: {inserted, deleted}}
+    }
 }
 
-export function rebaseMergedTransform(user, {tr, changes, conflicts, conflictingSteps1, conflictingSteps2}) {
-    let conflictingSteps = user === 1 ? conflictingSteps1 : conflictingSteps2,
-        otherUser = user === 1 ? 2 : 1,
-        otherConflictingSteps = user === 1 ? conflictingSteps2 : conflictingSteps1,
-        {tr: addedTr, changes: combinedChanges} = applyAllConflictingSteps(tr.doc, changes, user, conflictingSteps),
-        {doc: conflictingDoc} = applyAllConflictingSteps(tr.doc, changes, otherUser, otherConflictingSteps)
-
-    addedTr.steps.forEach(step => tr.step(step))
-    changes = combinedChanges
-
-    let trConflict = recreateSteps(tr.doc, conflictingDoc, false),
+function rebaseMergedTransform(doc, nonConflictingDoc, conflictingDoc) {
+    let trNonConflict = recreateTransform(doc, nonConflictingDoc, true),
+        changes = ChangeSet.create(doc).addSteps(nonConflictingDoc, trNonConflict.mapping.maps, {user: 2}),
+        trConflict = recreateTransform(nonConflictingDoc, conflictingDoc, false),
         {
             inserted,
             deleted,
-            conflictingSteps1: newConflictingSteps1,
-            conflictingSteps2: newConflictingSteps2
+            conflictingSteps2
         } = createConflictingChanges(
-            user===1 ? new Transform(tr.doc) : trConflict,
-            user===2 ? new Transform(tr.doc) : trConflict
+            new Transform(trNonConflict.doc),
+            trConflict
         )
 
     return {
-        tr,
+        tr: trNonConflict,
         changes,
         conflicts: [],
-        conflictingSteps1: newConflictingSteps1,
-        conflictingSteps2: newConflictingSteps2,
+        conflictingSteps1: [],
+        conflictingSteps2,
         conflictingChanges: {inserted, deleted}
     }
 }
@@ -92,43 +106,50 @@ export function applyConflictingStep(user, index, doc, changes, conflicts, confl
 function applyAllConflictingSteps(doc, changes, user, conflictingSteps) {
     let steps = conflictingSteps.map(([index, step]) => step),
         tr = new Transform(doc)
+
+    if (!changes) {
+        changes = ChangeSet.create(doc)
+    }
     while(steps.length) {
-        tr.step(steps.pop().map(tr.mapping))
-        changes = changes.addSteps(tr.doc, [tr.mapping.maps[tr.mapping.maps.length-1]], {user})
+        let mapped = steps.pop().map(tr.mapping)
+        if (mapped && !tr.maybeStep(mapped).failed) {
+            changes = changes.addSteps(tr.doc, [tr.mapping.maps[tr.mapping.maps.length-1]], {user})
+        }
     }
     return {tr, doc: tr.doc, changes}
 }
 
-function mapTr(tr, map) {
-    if (!tr.steps.length) {
-        return tr
-    }
-    let newTr = new Transform(tr.docs[0])
+function mapTransform(tr, doc, map) {
+    let newTr = new Transform(doc)
     tr.steps.forEach(step => {
         let mapped = step.map(map)
         if (mapped) {
-            newTr.step(mapped)
+            newTr.maybeStep(mapped)
         }
     })
     return newTr
 }
 
-function automergeTrs(tr1, tr2) {
+function trDoc(tr, index=0) {
+    return tr.docs.length > index ? tr.docs[index] : tr.doc
+}
+
+function automergeTransforms(tr1, tr2) {
     // Merge all non-conflicting steps with changes marked.
-    let doc = tr1.steps.length ? tr1.docs[0] : tr1.doc,
+    let doc = trDoc(tr1),
         conflicts = findConflicts(tr1, tr2),
         tr = new Transform(doc),
         changes = ChangeSet.create(doc),
         tr1NoConflicts = removeConflictingSteps(tr1, conflicts.map(conflict => conflict[0])),
         tr2NoConflicts = removeConflictingSteps(tr2, conflicts.map(conflict => conflict[1]))
 
-    tr1NoConflicts.steps.forEach(step => tr.step(step))
+    tr1NoConflicts.steps.forEach(step => tr.maybeStep(step))
     let numberSteps1 = tr.steps.length
     changes = changes.addSteps(tr.doc, tr.mapping.maps, {user: 1})
-    tr2NoConflicts.steps.forEach((step, index) => {
+    tr2NoConflicts.steps.forEach(step => {
         let mapped = step.map(tr.mapping.slice(0, numberSteps1))
         if (mapped) {
-            tr.step(mapped)
+            tr.maybeStep(mapped)
         }
     })
     changes = changes.addSteps(tr.doc, tr.mapping.maps.slice(numberSteps1), {user: 2})
@@ -137,7 +158,7 @@ function automergeTrs(tr1, tr2) {
 }
 
 function removeConflictingSteps(tr, conflicts) {
-    let doc = tr.steps.length ? tr.docs[0] : tr.doc,
+    let doc = trDoc(tr),
         newTr = new Transform(doc),
         removedStepsMap = new Mapping()
 
@@ -148,7 +169,7 @@ function removeConflictingSteps(tr, conflicts) {
         } else if (conflicts.includes(index)) {
             removedStepsMap.appendMap(mapped.invert(newTr.doc).getMap())
         } else {
-            newTr.step(mapped)
+            newTr.maybeStep(mapped)
         }
     })
     return newTr
@@ -199,10 +220,10 @@ function findConflicts(tr1, tr2) {
 }
 
 function findContentChanges(tr) {
-    let doc = tr.steps.length ? tr.docs[0] : tr.doc,
+    let doc = trDoc(tr),
         changes = ChangeSet.create(doc)
     tr.steps.forEach((step, index) => {
-        let doc = tr.docs[index+1] ? tr.docs[index+1] : tr.doc
+        let doc = trDoc(tr, index+1)
         changes = changes.addSteps(doc, [tr.mapping.maps[index]], {step: index})
     })
     let invertedMapping = new Mapping()
@@ -214,7 +235,7 @@ function findContentChanges(tr) {
 }
 
 function createConflictingChanges(tr1Conflict, tr2Conflict) {
-    let doc = tr1Conflict.steps.length ? tr1Conflict.docs[0] : tr1Conflict.doc,
+    let doc = trDoc(tr1Conflict),
         // We map the steps so that the positions are all at the level of the current
         // doc as there is no guarantee for the order in which they will be applied.
         // If one of them is being applied, the other ones will have to be remapped.
