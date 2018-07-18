@@ -68,14 +68,17 @@ function rebaseMergedTransform(doc, nonConflictingDoc, conflictingDoc) {
     }
 }
 
-export function applyConflictingStep(user, index, doc, changes, conflicts, conflictingSteps1, conflictingSteps2, conflictingChanges) {
+export function applyConflictingStep(user, index, {tr, changes, conflicts, conflictingSteps1, conflictingSteps2, conflictingChanges}) {
     let step = user === 1 ?
             conflictingSteps1.find(([conflictIndex, conflictStep]) => conflictIndex === index)[1] :
             conflictingSteps2.find(([conflictIndex, conflictStep]) => conflictIndex === index)[1],
-        stepResult = step.apply(doc),
         map = step.getMap()
 
-    changes = changes.addSteps(stepResult.doc, [map], {user})
+    tr = new Transform(tr.doc)
+
+    tr.step(step)
+
+    changes = changes.addSteps(tr.doc, [map], {user})
 
     if (user === 1) {
         conflictingSteps1 = conflictingSteps1.map(
@@ -89,7 +92,6 @@ export function applyConflictingStep(user, index, doc, changes, conflicts, confl
         conflicts = conflicts.filter(conflict => conflict[1] !== index)
     }
 
-    doc = stepResult.doc
     conflictingChanges = {
         inserted: conflictingChanges.inserted.filter(inserted => inserted.data.user !== user || inserted.data.index !== index).map(
             inserted => ({data: inserted.data, slice: inserted.slice, pos: map.map(inserted.pos)})
@@ -99,8 +101,29 @@ export function applyConflictingStep(user, index, doc, changes, conflicts, confl
         )
     }
 
+    return {tr, changes, conflicts, conflictingSteps1, conflictingSteps2, conflictingChanges}
+}
 
-    return {doc, changes, conflicts, conflictingSteps1, conflictingSteps2, conflictingChanges}
+export function rejectConflictingStep(user, index, {tr, changes, conflicts, conflictingSteps1, conflictingSteps2, conflictingChanges}) {
+
+    if (user === 1) {
+        conflictingSteps1 = conflictingSteps1.map(
+            ([conflictIndex, conflictStep]) => conflictIndex === index ? false : [conflictIndex, conflictStep]
+        ).filter(step => step)
+        conflicts = conflicts.filter(conflict => conflict[0] !== index)
+    } else {
+        conflictingSteps2 = conflictingSteps2.map(
+            ([conflictIndex, conflictStep]) => conflictIndex === index ? false : [conflictIndex, conflictStep]
+        ).filter(step => step)
+        conflicts = conflicts.filter(conflict => conflict[1] !== index)
+    }
+
+    conflictingChanges = {
+        inserted: conflictingChanges.inserted.filter(inserted => inserted.data.user !== user || inserted.data.index !== index),
+        deleted: conflictingChanges.deleted.filter(deleted => deleted.data.user !== user || deleted.data.index !== index)
+    }
+
+    return {tr, changes, conflicts, conflictingSteps1, conflictingSteps2, conflictingChanges}
 }
 
 function applyAllConflictingSteps(doc, changes, user, conflictingSteps) {

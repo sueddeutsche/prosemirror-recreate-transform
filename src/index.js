@@ -3,5 +3,6 @@ export {
 } from "./recreate"
 export {
     mergeTransforms,
-    applyConflictingStep
+    applyConflictingStep,
+    rejectConflictingStep
 } from "./merge"

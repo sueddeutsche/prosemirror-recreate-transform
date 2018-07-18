@@ -27,7 +27,9 @@ import {
 
 import {
     recreateTransform,
-    mergeTransforms
+    mergeTransforms,
+    applyConflictingStep,
+    rejectConflictingStep
 } from "../../src"
 
 const mySchema = new Schema({
@@ -49,20 +51,17 @@ window.view2 = new EditorView(document.querySelector("#editor2"), {
     state
 })
 
-document.getElementById('compare').addEventListener('click', () => {
-    let tr1 = recreateTransform(state.doc, view1.state.doc),
-        tr2 = recreateTransform(state.doc, view2.state.doc),
-        decos = DecorationSet.empty,
-        {tr, changes, conflicts, conflictingSteps1, conflictingSteps2, conflictingChanges} =
-            mergeTransforms(tr1, tr2, document.getElementById('rebase').checked)
+function updateEditor3(mergeData) {
+    let decos = DecorationSet.empty
 
+    document.getElementById('editor3').innerHTML = ''
     if (document.getElementById('automerge_show').checked) {
-        changes.inserted.forEach(insertion => {
-            decos = decos.add(tr.doc, [
+        mergeData.changes.inserted.forEach(insertion => {
+            decos = decos.add(mergeData.tr.doc, [
                 Decoration.inline(insertion.from, insertion.to, {class: `automerged insertion user-${insertion.data.user}`}, {})
             ])
         })
-        changes.deleted.forEach(deletion => {
+        mergeData.changes.deleted.forEach(deletion => {
 
             let dom = document.createElement('span')
             dom.setAttribute('class', `automerged deletion user-${deletion.data.user}`)
@@ -71,13 +70,13 @@ document.getElementById('compare').addEventListener('click', () => {
                 DOMSerializer.fromSchema(mySchema).serializeFragment(deletion.slice.content)
             )
 
-            decos = decos.add(tr.doc, [
+            decos = decos.add(mergeData.tr.doc, [
                 Decoration.widget(deletion.pos, dom, {marks: []})
             ])
         })
     }
 
-    conflictingChanges.inserted.forEach(insertion => {
+    mergeData.conflictingChanges.inserted.forEach(insertion => {
         let dom = document.createElement('span')
         dom.setAttribute('class', `proposed insertion user-${insertion.data.user}`)
 
@@ -85,19 +84,36 @@ document.getElementById('compare').addEventListener('click', () => {
             DOMSerializer.fromSchema(mySchema).serializeFragment(insertion.slice.content)
         )
 
-        decos = decos.add(tr.doc, [
+        let selector = document.createElement('span')
+        selector.innerHTML =
+            `<button class="accept" data-index="${insertion.data.index}" data-user="${insertion.data.user}">Accept</button>
+            <button class="reject" data-index="${insertion.data.index}" data-user="${insertion.data.user}">Reject</button>`
+
+        dom.appendChild(
+            selector
+        )
+
+        decos = decos.add(mergeData.tr.doc, [
             Decoration.widget(insertion.pos, dom, {marks: []})
         ])
     })
 
-    conflictingChanges.deleted.forEach(deletion => {
-        decos = decos.add(tr.doc, [
-            Decoration.inline(deletion.from, deletion.to, {class: `proposed deletion user-${deletion.data.user}`}, {})
+    mergeData.conflictingChanges.deleted.forEach(deletion => {
+
+        let selector = document.createElement('span')
+        selector.innerHTML =
+            `<button class="accept" data-index="${deletion.data.index}" data-user="${deletion.data.user}">Accept</button>
+            <button class="reject" data-index="${deletion.data.index}" data-user="${deletion.data.user}">Reject</button>`
+
+        decos = decos.add(mergeData.tr.doc, [
+            Decoration.inline(deletion.from, deletion.to, {class: `proposed deletion user-${deletion.data.user}`}, {}),
+            Decoration.widget(deletion.to, selector, {marks: []})
         ])
+
     })
 
     let mergedState = EditorState.create({
-        doc: tr.doc,
+        doc: mergeData.tr.doc,
         plugins: [
             new Plugin({
                 key: new PluginKey('diffs'),
@@ -114,4 +130,30 @@ document.getElementById('compare').addEventListener('click', () => {
     window.view3 = new EditorView(document.querySelector("#editor3"), {
         state: mergedState
     })
+
+    document.querySelectorAll("#editor3 .accept").forEach(
+        el => el.addEventListener('click', () => {
+            let user = parseInt(el.dataset.user),
+                index = parseInt(el.dataset.index)
+            mergeData = applyConflictingStep(user, index, mergeData)
+            updateEditor3(mergeData)
+        })
+    )
+
+    document.querySelectorAll("#editor3 .reject").forEach(
+        el => el.addEventListener('click', () => {
+            let user = parseInt(el.dataset.user),
+                index = parseInt(el.dataset.index)
+            mergeData = rejectConflictingStep(user, index, mergeData)
+            updateEditor3(mergeData)
+        })
+    )
+}
+
+
+document.getElementById('compare').addEventListener('click', () => {
+    let tr1 = recreateTransform(state.doc, view1.state.doc),
+        tr2 = recreateTransform(state.doc, view2.state.doc),
+        mergeData = mergeTransforms(tr1, tr2, document.getElementById('rebase').checked)
+    updateEditor3(mergeData)
 })
