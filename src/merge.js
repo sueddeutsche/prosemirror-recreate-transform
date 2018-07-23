@@ -41,7 +41,7 @@ export function mergeTransforms(tr1, tr2, rebase = false) {
             let conflicts = findConflicts(tr1Conflict, tr2Conflict),
                 {inserted, deleted, conflictingSteps1, conflictingSteps2} = createConflictingChanges(tr1Conflict, tr2Conflict)
 
-        return {tr, changes, conflicts, conflictingSteps1, conflictingSteps2, conflictingChanges: {inserted, deleted}}
+        return {tr, merge: new Merge(changes, conflicts, conflictingSteps1, conflictingSteps2, {inserted, deleted})}
     }
 }
 
@@ -60,86 +60,155 @@ function rebaseMergedTransform(doc, nonConflictingDoc, conflictingDoc) {
 
     return {
         tr: trNonConflict,
-        changes,
-        conflicts: [],
-        conflictingSteps1: [],
-        conflictingSteps2,
-        conflictingChanges: {inserted, deleted}
-    }
-}
-
-export function applyConflictingStep(user, index, {tr, changes, conflicts, conflictingSteps1, conflictingSteps2, conflictingChanges}) {
-    let step = user === 1 ?
-            conflictingSteps1.find(([conflictIndex, conflictStep]) => conflictIndex === index)[1] :
-            conflictingSteps2.find(([conflictIndex, conflictStep]) => conflictIndex === index)[1],
-        map = step.getMap()
-
-    tr = new Transform(tr.doc)
-
-    tr.step(step)
-
-    changes = changes.addSteps(tr.doc, [map], {user})
-
-    if (user === 1) {
-        conflictingSteps1 = conflictingSteps1.map(
-            ([conflictIndex, conflictStep]) => conflictIndex === index ? false : [conflictIndex, conflictStep.map(map)]
-        ).filter(step => step)
-        conflicts = conflicts.filter(conflict => conflict[0] !== index)
-    } else {
-        conflictingSteps2 = conflictingSteps2.map(
-            ([conflictIndex, conflictStep]) => conflictIndex === index ? false : [conflictIndex, conflictStep.map(map)]
-        ).filter(step => step)
-        conflicts = conflicts.filter(conflict => conflict[1] !== index)
-    }
-
-    conflictingChanges = {
-        inserted: conflictingChanges.inserted.filter(inserted => inserted.data.user !== user || inserted.data.index !== index).map(
-            inserted => ({data: inserted.data, slice: inserted.slice, pos: map.map(inserted.pos)})
-        ),
-        deleted: conflictingChanges.deleted.filter(deleted => deleted.data.user !== user || deleted.data.index !== index).map(
-            deleted => ({data: deleted.data, from: map.map(deleted.from), to: map.map(deleted.to)})
+        merge: new Merge(
+            trNonConflict.doc, changes, [], [], conflictingSteps2, {inserted, deleted}
         )
     }
-
-    return {tr, changes, conflicts, conflictingSteps1, conflictingSteps2, conflictingChanges}
 }
 
-export function rejectConflictingStep(user, index, {tr, changes, conflicts, conflictingSteps1, conflictingSteps2, conflictingChanges}) {
+export class Merge {
+    constructor(
+        doc,
+        changes,
+        conflicts = [],
+        conflictingSteps1 = [],
+        conflictingSteps2 = [],
+        conflictingChanges = {inserted: [], deleted: []}
+    ) {
+        this.doc = doc
+        this.changes = changes
+        this.conflicts = conflicts
+        this.conflictingSteps1 = conflictingSteps1
+        this.conflictingSteps2 = conflictingSteps2
+        this.conflictingChanges = conflictingChanges
+    }
 
-    if (user === 1) {
+    map(mapping, doc) {
+        let conflictingSteps1 = this.conflictingSteps1,
+        conflictingSteps2 = this.conflictingSteps2,
+        conflicts = this.conflicts,
+        changes = this.changes.addSteps(doc, mapping.maps, {user: 2}),
+        inserted = this.conflictingChanges.inserted,
+        deleted = this.conflictingChanges.deleted
+
         conflictingSteps1 = conflictingSteps1.map(
-            ([conflictIndex, conflictStep]) => conflictIndex === index ? false : [conflictIndex, conflictStep]
+            ([index, conflictStep]) => {
+                let mapped = conflictStep.map(mapping)
+                if (mapped) {
+                    inserted = inserted.map(
+                        inserted => ({data: inserted.data, slice: inserted.slice, pos: mapping.map(inserted.pos)})
+                    )
+                    deleted = deleted.map(
+                        deleted => ({data: deleted.data, from: mapping.map(deleted.from), to: mapping.map(deleted.to)})
+                    )
+                    return [index, mapped]
+                } else {
+                    conflicts = conflicts.filter(conflict => conflict[0] !== index)
+                    inserted = inserted.filter(inserted => inserted.data.user !== 1 || inserted.data.index !== index)
+                    deleted = deleted.filter(deleted => deleted.data.user !== 1 || deleted.data.index !== index)
+                    return false
+                }
+            }
         ).filter(step => step)
-        conflicts = conflicts.filter(conflict => conflict[0] !== index)
-    } else {
+
         conflictingSteps2 = conflictingSteps2.map(
-            ([conflictIndex, conflictStep]) => conflictIndex === index ? false : [conflictIndex, conflictStep]
+            ([index, conflictStep]) => {
+                let mapped = conflictStep.map(mapping)
+                if (mapped) {
+                    inserted = inserted.map(
+                        inserted => ({data: inserted.data, slice: inserted.slice, pos: mapping.map(inserted.pos)})
+                    )
+                    deleted = deleted.map(
+                        deleted => ({data: deleted.data, from: mapping.map(deleted.from), to: mapping.map(deleted.to)})
+                    )
+                    return [index, mapped]
+                } else {
+                    conflicts = conflicts.filter(conflict => conflict[1] !== index)
+                    inserted = inserted.filter(inserted => inserted.data.user !== 2 || inserted.data.index !== index)
+                    deleted = deleted.filter(deleted => deleted.data.user !== 2 || deleted.data.index !== index)
+                    return false
+                }
+            }
         ).filter(step => step)
-        conflicts = conflicts.filter(conflict => conflict[1] !== index)
+
+        return new Merge(doc, changes, conflicts, conflictingSteps1, conflictingSteps2, {inserted, deleted})
+
     }
 
-    conflictingChanges = {
-        inserted: conflictingChanges.inserted.filter(inserted => inserted.data.user !== user || inserted.data.index !== index),
-        deleted: conflictingChanges.deleted.filter(deleted => deleted.data.user !== user || deleted.data.index !== index)
-    }
+    apply(user, index) {
+        let step = user === 1 ?
+                this.conflictingSteps1.find(([conflictIndex, conflictStep]) => conflictIndex === index)[1] :
+                this.conflictingSteps2.find(([conflictIndex, conflictStep]) => conflictIndex === index)[1],
+            map = step.getMap(),
+            tr = new Transform(this.doc),
+            conflictingSteps1 = this.conflictingSteps1,
+            conflictingSteps2 = this.conflictingSteps2,
+            conflicts = this.conflicts
 
-    return {tr, changes, conflicts, conflictingSteps1, conflictingSteps2, conflictingChanges}
-}
+        tr.step(step)
 
-function applyAllConflictingSteps(doc, changes, user, conflictingSteps) {
-    let steps = conflictingSteps.map(([index, step]) => step),
-        tr = new Transform(doc)
+        let changes = this.changes.addSteps(tr.doc, [map], {user})
 
-    if (!changes) {
-        changes = ChangeSet.create(doc)
-    }
-    while(steps.length) {
-        let mapped = steps.pop().map(tr.mapping)
-        if (mapped && !tr.maybeStep(mapped).failed) {
-            changes = changes.addSteps(tr.doc, [tr.mapping.maps[tr.mapping.maps.length-1]], {user})
+        if (user === 1) {
+            conflictingSteps1 = conflictingSteps1.map(
+                ([conflictIndex, conflictStep]) => conflictIndex === index ? false : [conflictIndex, conflictStep.map(map)]
+            ).filter(step => step)
+            conflicts = conflicts.filter(conflict => conflict[0] !== index)
+        } else {
+            conflictingSteps2 = conflictingSteps2.map(
+                ([conflictIndex, conflictStep]) => conflictIndex === index ? false : [conflictIndex, conflictStep.map(map)]
+            ).filter(step => step)
+            conflicts = conflicts.filter(conflict => conflict[1] !== index)
         }
+
+        let conflictingChanges = {
+            inserted: this.conflictingChanges.inserted.filter(inserted => inserted.data.user !== user || inserted.data.index !== index).map(
+                inserted => ({data: inserted.data, slice: inserted.slice, pos: map.map(inserted.pos)})
+            ),
+            deleted: this.conflictingChanges.deleted.filter(deleted => deleted.data.user !== user || deleted.data.index !== index).map(
+                deleted => ({data: deleted.data, from: map.map(deleted.from), to: map.map(deleted.to)})
+            )
+        }
+
+        return {tr, merge: new Merge(tr.doc, changes, conflicts, conflictingSteps1, conflictingSteps2, conflictingChanges)}
     }
-    return {tr, doc: tr.doc, changes}
+
+    reject(user, index) {
+        let conflictingSteps1 = this.conflictingSteps1,
+            conflictingSteps2 = this.conflictingSteps2,
+            conflicts = this.conflicts
+
+        if (user === 1) {
+            conflictingSteps1 = conflictingSteps1.map(
+                ([conflictIndex, conflictStep]) => conflictIndex === index ? false : [conflictIndex, conflictStep]
+            ).filter(step => step)
+            conflicts = conflicts.filter(conflict => conflict[0] !== index)
+        } else {
+            conflictingSteps2 = conflictingSteps2.map(
+                ([conflictIndex, conflictStep]) => conflictIndex === index ? false : [conflictIndex, conflictStep]
+            ).filter(step => step)
+            conflicts = conflicts.filter(conflict => conflict[1] !== index)
+        }
+
+        let conflictingChanges = {
+            inserted: this.conflictingChanges.inserted.filter(inserted => inserted.data.user !== user || inserted.data.index !== index),
+            deleted: this.conflictingChanges.deleted.filter(deleted => deleted.data.user !== user || deleted.data.index !== index)
+        }
+
+        return {merge: new Merge(this.doc, this.changes, conflicts, conflictingSteps1, conflictingSteps2, conflictingChanges)}
+    }
+
+    applyAll() {
+        let steps = this.conflictingSteps.map(([index, step]) => step),
+            tr = new Transform(this.doc)
+        while(steps.length) {
+            let mapped = steps.pop().map(tr.mapping)
+            if (mapped && !tr.maybeStep(mapped).failed) {
+                changes = this.changes.addSteps(tr.doc, [tr.mapping.maps[tr.mapping.maps.length-1]], {user})
+            }
+        }
+        return {tr, merge: new Merge(tr.doc, changes)}
+    }
 }
 
 function mapTransform(tr, doc, map) {
