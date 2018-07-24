@@ -49,7 +49,7 @@ export function mergeTransforms(tr1, tr2, rebase = false, wordDiffs = false) {
 
 function rebaseMergedTransform(doc, nonConflictingDoc, conflictingDoc, wordDiffs) {
     let trNonConflict = recreateTransform(doc, nonConflictingDoc, true, wordDiffs),
-        changes = ChangeSet.create(doc).addSteps(nonConflictingDoc, trNonConflict.mapping.maps, {user: 2}),
+        changes = ChangeSet.create(doc, {compare: (a,b) => false}).addSteps(nonConflictingDoc, trNonConflict.mapping.maps, {user: 2}),
         trConflict = recreateTransform(nonConflictingDoc, conflictingDoc, false, wordDiffs),
         {
             inserted,
@@ -233,7 +233,7 @@ function automergeTransforms(tr1, tr2) {
     let doc = trDoc(tr1),
         conflicts = findConflicts(tr1, tr2),
         tr = new Transform(doc),
-        changes = ChangeSet.create(doc),
+        changes = ChangeSet.create(doc, {compare: (a,b) => false}),
         tr1NoConflicts = removeConflictingSteps(tr1, conflicts.map(conflict => conflict[0])),
         tr2NoConflicts = removeConflictingSteps(tr2, conflicts.map(conflict => conflict[1]))
 
@@ -315,7 +315,7 @@ function findConflicts(tr1, tr2) {
 
 function findContentChanges(tr) {
     let doc = trDoc(tr),
-        changes = ChangeSet.create(doc)
+        changes = ChangeSet.create(doc, {compare: (a,b) => false})
     tr.steps.forEach((step, index) => {
         let doc = trDoc(tr, index+1)
         changes = changes.addSteps(doc, [tr.mapping.maps[index]], {step: index})
@@ -347,7 +347,7 @@ function createConflictingChanges(tr1Conflict, tr2Conflict) {
             let stepResult = step.apply(doc)
             // We need the potential changes if this step was to be applied. We find
             // the inversion of the change so that we can place it in the current doc.
-            let invertedStepChanges = ChangeSet.create(stepResult.doc).addSteps(doc, [step.invert(doc).getMap()], {index, user})
+            let invertedStepChanges = ChangeSet.create(stepResult.doc, {compare: (a,b) => false}).addSteps(doc, [step.invert(doc).getMap()], {index, user})
             deleted = deleted.concat(invertedStepChanges.inserted.map(inserted => ({from: inserted.from, to: inserted.to, data: inserted.data})))
             inserted = inserted.concat(invertedStepChanges.deleted.map(deleted => ({pos: deleted.pos, slice: deleted.slice, data: deleted.data})))
         })

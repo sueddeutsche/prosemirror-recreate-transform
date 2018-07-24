@@ -73,7 +73,6 @@ function getDecos(merge, showMergedChanged) {
     }
 
     let buttonDecos = {} // Don't show the button decos more than once for each change. Last widget wins.
-
     merge.conflictingChanges.inserted.forEach(insertion => {
         let dom = document.createElement('span')
         dom.setAttribute('class', `proposed insertion user-${insertion.data.user}`)

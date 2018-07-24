@@ -176,16 +176,28 @@ class RecreateTransform {
             currentText = obj,
             textDiffs = this.wordDiffs ? diffWordsWithSpace(currentText, finalText) : diffChars(currentText, finalText)
 
-        textDiffs.forEach(diff => {
+        while(textDiffs.length) {
+            let diff = textDiffs.shift()
             if (diff.added) {
-                this.tr.insert(offset, this.schema.nodeFromJSON({type: 'text', text: diff.value}))
+                if (textDiffs.length && textDiffs[0].removed) {
+                    let nextDiff = textDiffs.shift()
+                    this.tr.replaceWith(offset, offset + nextDiff.value.length, this.schema.nodeFromJSON({type: 'text', text: diff.value}))
+                } else {
+                    this.tr.insert(offset, this.schema.nodeFromJSON({type: 'text', text: diff.value}))
+                }
                 offset += diff.value.length
             } else if (diff.removed) {
-                this.tr.delete(offset, offset + diff.value.length)
+                if (textDiffs.length && textDiffs[0].added) {
+                    let nextDiff = textDiffs.shift()
+                    this.tr.replaceWith(offset, offset + diff.value.length, this.schema.nodeFromJSON({type: 'text', text: nextDiff.value}))
+                    offset += nextDiff.value.length
+                } else {
+                    this.tr.delete(offset, offset + diff.value.length)
+                }
             } else {
                 offset += diff.value.length
             }
-        })
+        }
 
     }
 
