@@ -52,11 +52,6 @@ window.view2 = new EditorView(document.querySelector("#editor2"), {
 function getDecos(merge, showMergedChanged) {
     let decos = DecorationSet.empty
     if (showMergedChanged) {
-        merge.changes.inserted.forEach(insertion => {
-            decos = decos.add(merge.doc, [
-                Decoration.inline(insertion.from, insertion.to, {class: `automerged insertion user-${insertion.data.user}`}, {})
-            ])
-        })
         merge.changes.deleted.forEach(deletion => {
 
             let dom = document.createElement('span')
@@ -66,11 +61,18 @@ function getDecos(merge, showMergedChanged) {
                 DOMSerializer.fromSchema(mySchema).serializeFragment(deletion.slice.content)
             )
 
-            decos = decos.add(mergeData.tr.doc, [
+            decos = decos.add(merge.doc, [
                 Decoration.widget(deletion.pos, dom, {marks: []})
             ])
         })
+        merge.changes.inserted.forEach(insertion => {
+            decos = decos.add(merge.doc, [
+                Decoration.inline(insertion.from, insertion.to, {class: `automerged insertion user-${insertion.data.user}`}, {})
+            ])
+        })
     }
+
+    let buttonDecos = {} // Don't show the button decos more than once for each change. Last widget wins.
 
     merge.conflictingChanges.inserted.forEach(insertion => {
         let dom = document.createElement('span')
@@ -80,33 +82,34 @@ function getDecos(merge, showMergedChanged) {
             DOMSerializer.fromSchema(mySchema).serializeFragment(insertion.slice.content)
         )
 
+        decos = decos.add(merge.doc, [
+            Decoration.widget(insertion.pos, dom, {marks: []})
+        ])
+
         let selector = document.createElement('span')
         selector.innerHTML =
             `<button class="accept" data-index="${insertion.data.index}" data-user="${insertion.data.user}">Accept</button>
             <button class="reject" data-index="${insertion.data.index}" data-user="${insertion.data.user}">Reject</button>`
 
-        dom.appendChild(
-            selector
-        )
-
-        decos = decos.add(merge.doc, [
-            Decoration.widget(insertion.pos, dom, {marks: []})
-        ])
+        buttonDecos[`${insertion.data.user}-${insertion.data.index}`] = Decoration.widget(insertion.pos, selector, {marks: []})
     })
 
     merge.conflictingChanges.deleted.forEach(deletion => {
+
+        decos = decos.add(merge.doc, [
+            Decoration.inline(deletion.from, deletion.to, {class: `proposed deletion user-${deletion.data.user}`}, {}),
+        ])
 
         let selector = document.createElement('span')
         selector.innerHTML =
             `<button class="accept" data-index="${deletion.data.index}" data-user="${deletion.data.user}">Accept</button>
             <button class="reject" data-index="${deletion.data.index}" data-user="${deletion.data.user}">Reject</button>`
 
-        decos = decos.add(merge.doc, [
-            Decoration.inline(deletion.from, deletion.to, {class: `proposed deletion user-${deletion.data.user}`}, {}),
-            Decoration.widget(deletion.to, selector, {marks: []})
-        ])
+        buttonDecos[`${deletion.data.user}-${deletion.data.index}`] = Decoration.widget(deletion.to, selector, {marks: [], side: -1})
 
     })
+    decos = decos.add(merge.doc, Object.values(buttonDecos))
+
     return decos
 }
 
@@ -114,7 +117,6 @@ function updateEditor3(merge) {
     let showMergedChanged = document.getElementById('automerge_show').checked
 
     document.getElementById('editor3').innerHTML = ''
-
 
     let mergedState = EditorState.create({
         doc: merge.doc,
@@ -173,8 +175,13 @@ function updateEditor3(merge) {
 }
 
 document.getElementById('compare').addEventListener('click', () => {
-    let tr1 = recreateTransform(state.doc, view1.state.doc),
-        tr2 = recreateTransform(state.doc, view2.state.doc),
-        mergeResult = mergeTransforms(tr1, tr2, document.getElementById('rebase').checked)
+    let tr1 = recreateTransform(state.doc, view1.state.doc, true, document.getElementById('word-diff').checked),
+        tr2 = recreateTransform(state.doc, view2.state.doc, true, document.getElementById('word-diff').checked),
+        mergeResult = mergeTransforms(
+            tr1,
+            tr2,
+            document.getElementById('rebase').checked,
+            document.getElementById('word-diff').checked
+        )
     updateEditor3(mergeResult.merge)
 })

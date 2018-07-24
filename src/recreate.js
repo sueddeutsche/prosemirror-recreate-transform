@@ -4,7 +4,7 @@ import {
 import {
     applyPatch, createPatch
 } from "rfc6902"
-import DiffMatchPatch from "diff-match-patch"
+import {diffWordsWithSpace, diffChars} from "diff"
 
 function getReplaceStep(fromDoc, toDoc) {
     let start = toDoc.content.findDiffStart(fromDoc.content)
@@ -33,10 +33,11 @@ function getReplaceStep(fromDoc, toDoc) {
 }
 
 class RecreateTransform {
-    constructor(fromDoc, toDoc, complexSteps) {
+    constructor(fromDoc, toDoc, complexSteps, wordDiffs) {
         this.fromDoc = fromDoc
         this.toDoc = toDoc
-        this.complexSteps = complexSteps // Whether to retun steps other than ReplaceSteps
+        this.complexSteps = complexSteps // Whether to return steps other than ReplaceSteps
+        this.wordDiffs = wordDiffs // Whether to make text diffs cover entire words
         this.schema = fromDoc.type.schema
         this.tr = new Transform(fromDoc)
     }
@@ -59,7 +60,9 @@ class RecreateTransform {
             this.recreateChangeContentSteps()
         }
 
-        this.simplifyTr()
+        if (!this.wordDiffs) {
+            this.simplifyTr()
+        }
 
         return this.tr
     }
@@ -147,10 +150,20 @@ class RecreateTransform {
 
     addReplaceTextSteps(op) {
 
-        let finalText = op.value,
+        // We find the position number of the first character in the string
+        let op1 = Object.assign({}, op, {value: 'x'}),
+            op2 = Object.assign({}, op, {value: 'y'}),
+            afterOP1JSON = JSON.parse(JSON.stringify(this.currentJSON)),
+            afterOP2JSON = JSON.parse(JSON.stringify(this.currentJSON))
+
+        applyPatch(afterOP1JSON, [op1])
+        applyPatch(afterOP2JSON, [op2])
+
+        let offset = this.schema.nodeFromJSON(afterOP1JSON).content.findDiffStart(
+                this.schema.nodeFromJSON(afterOP2JSON).content
+            ),
             pathParts = op.path.split('/'),
-            obj = this.currentJSON,
-            dmp = new DiffMatchPatch()
+            obj = this.currentJSON
 
         pathParts.shift()
 
@@ -159,16 +172,21 @@ class RecreateTransform {
             obj = obj[pathPart]
         }
 
-        let currentText = obj,
-            textDiffs = dmp.diff_main(currentText, finalText),
-            textPatches = dmp.patch_make(textDiffs)
+        let finalText = op.value,
+            currentText = obj,
+            textDiffs = this.wordDiffs ? diffWordsWithSpace(currentText, finalText) : diffChars(currentText, finalText)
 
-        textPatches.forEach(patch => {
-            [currentText] = dmp.patch_apply([patch], currentText)
-            let partialOp = Object.assign({}, op, {value: currentText})
-
-            this.addReplaceStep(partialOp)
+        textDiffs.forEach(diff => {
+            if (diff.added) {
+                this.tr.insert(offset, this.schema.nodeFromJSON({type: 'text', text: diff.value}))
+                offset += diff.value.length
+            } else if (diff.removed) {
+                this.tr.delete(offset, offset + diff.value.length)
+            } else {
+                offset += diff.value.length
+            }
         })
+
     }
 
     // join adjacent ReplaceSteps
@@ -177,8 +195,8 @@ class RecreateTransform {
             return
         }
 
-        let newTr = new Transform(this.tr.docs[0])
-        let oldSteps = this.tr.steps
+        let newTr = new Transform(this.tr.docs[0]),
+            oldSteps = this.tr.steps.slice()
         while (oldSteps.length) {
             let step = oldSteps.shift()
             while(
@@ -197,7 +215,7 @@ class RecreateTransform {
 
 }
 
-export function recreateTransform(fromDoc, toDoc, complexSteps = true) {
-    let recreator = new RecreateTransform(fromDoc, toDoc, complexSteps)
+export function recreateTransform(fromDoc, toDoc, complexSteps = true, wordDiffs = false) {
+    let recreator = new RecreateTransform(fromDoc, toDoc, complexSteps, wordDiffs)
     return recreator.init()
 }

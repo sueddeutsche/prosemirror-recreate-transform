@@ -8,7 +8,7 @@ import {
     recreateTransform
 } from "./recreate"
 
-export function mergeTransforms(tr1, tr2, rebase = false) {
+export function mergeTransforms(tr1, tr2, rebase = false, wordDiffs = false) {
         // Create conflicting steps. Make sure the steps are only ReplaceSteps so they can easily
         // be presented as alternatives to the user.
     let {tr, changes, tr1NoConflicts, tr2NoConflicts} = automergeTransforms(tr1, tr2),
@@ -19,7 +19,8 @@ export function mergeTransforms(tr1, tr2, rebase = false) {
             recreateTransform(
                 tr1NoConflicts.doc,
                 tr1.doc,
-                false
+                false,
+                wordDiffs
             ),
             tr.doc,
             new Mapping(tr1NoConflicts.mapping.invert().maps.concat(tr.mapping.maps))
@@ -28,7 +29,8 @@ export function mergeTransforms(tr1, tr2, rebase = false) {
             recreateTransform(
                 tr2NoConflicts.doc,
                 tr2.doc,
-                false
+                false,
+                wordDiffs
             ),
             tr.doc,
             new Mapping(tr2NoConflicts.mapping.invert().maps.concat(tr.mapping.maps))
@@ -36,19 +38,19 @@ export function mergeTransforms(tr1, tr2, rebase = false) {
 
     if (rebase) {
         // rebase on tr1.doc -- makes all changes relative to user 1
-        return rebaseMergedTransform(tr1.doc, tr1Conflict.doc, tr2Conflict.doc)
+        return rebaseMergedTransform(tr1.doc, tr1Conflict.doc, tr2Conflict.doc, wordDiffs)
     } else {
             let conflicts = findConflicts(tr1Conflict, tr2Conflict),
                 {inserted, deleted, conflictingSteps1, conflictingSteps2} = createConflictingChanges(tr1Conflict, tr2Conflict)
 
-        return {tr, merge: new Merge(changes, conflicts, conflictingSteps1, conflictingSteps2, {inserted, deleted})}
+        return {tr, merge: new Merge(tr.doc, changes, conflicts, conflictingSteps1, conflictingSteps2, {inserted, deleted})}
     }
 }
 
-function rebaseMergedTransform(doc, nonConflictingDoc, conflictingDoc) {
-    let trNonConflict = recreateTransform(doc, nonConflictingDoc, true),
+function rebaseMergedTransform(doc, nonConflictingDoc, conflictingDoc, wordDiffs) {
+    let trNonConflict = recreateTransform(doc, nonConflictingDoc, true, wordDiffs),
         changes = ChangeSet.create(doc).addSteps(nonConflictingDoc, trNonConflict.mapping.maps, {user: 2}),
-        trConflict = recreateTransform(nonConflictingDoc, conflictingDoc, false),
+        trConflict = recreateTransform(nonConflictingDoc, conflictingDoc, false, wordDiffs),
         {
             inserted,
             deleted,
