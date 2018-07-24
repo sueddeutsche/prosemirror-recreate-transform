@@ -151,17 +151,18 @@ class RecreateTransform {
     addReplaceTextSteps(op) {
 
         // We find the position number of the first character in the string
-        let op1 = Object.assign({}, op, {value: 'x'}),
-            op2 = Object.assign({}, op, {value: 'y'}),
+        let op1 = Object.assign({}, op, {value: 'xx'}),
+            op2 = Object.assign({}, op, {value: 'yy'}),
             afterOP1JSON = JSON.parse(JSON.stringify(this.currentJSON)),
             afterOP2JSON = JSON.parse(JSON.stringify(this.currentJSON))
 
         applyPatch(afterOP1JSON, [op1])
         applyPatch(afterOP2JSON, [op2])
 
-        let offset = this.schema.nodeFromJSON(afterOP1JSON).content.findDiffStart(
-                this.schema.nodeFromJSON(afterOP2JSON).content
-            ),
+        let op1Doc = this.schema.nodeFromJSON(afterOP1JSON),
+            op2Doc = this.schema.nodeFromJSON(afterOP2JSON),
+            offset = op1Doc.content.findDiffStart(op2Doc.content),
+            marks = op1Doc.resolve(offset+1).marks(),
             pathParts = op.path.split('/'),
             obj = this.currentJSON
 
@@ -181,15 +182,26 @@ class RecreateTransform {
             if (diff.added) {
                 if (textDiffs.length && textDiffs[0].removed) {
                     let nextDiff = textDiffs.shift()
-                    this.tr.replaceWith(offset, offset + nextDiff.value.length, this.schema.nodeFromJSON({type: 'text', text: diff.value}))
+                    this.tr.replaceWith(
+                        offset,
+                        offset + nextDiff.value.length,
+                        this.schema.nodeFromJSON({type: 'text', text: diff.value}).mark(marks)
+                    )
                 } else {
-                    this.tr.insert(offset, this.schema.nodeFromJSON({type: 'text', text: diff.value}))
+                    this.tr.insert(
+                        offset,
+                        this.schema.nodeFromJSON({type: 'text', text: diff.value}).mark(marks)
+                    )
                 }
                 offset += diff.value.length
             } else if (diff.removed) {
                 if (textDiffs.length && textDiffs[0].added) {
                     let nextDiff = textDiffs.shift()
-                    this.tr.replaceWith(offset, offset + diff.value.length, this.schema.nodeFromJSON({type: 'text', text: nextDiff.value}))
+                    this.tr.replaceWith(
+                        offset,
+                        offset + diff.value.length,
+                        this.schema.nodeFromJSON({type: 'text', text: nextDiff.value}).mark(marks)
+                    )
                     offset += nextDiff.value.length
                 } else {
                     this.tr.delete(offset, offset + diff.value.length)
