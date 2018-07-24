@@ -60,9 +60,7 @@ class RecreateTransform {
             this.recreateChangeContentSteps()
         }
 
-        if (!this.wordDiffs) {
-            this.simplifyTr()
-        }
+        this.simplifyTr()
 
         return this.tr
     }
