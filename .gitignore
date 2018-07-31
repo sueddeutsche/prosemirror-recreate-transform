@@ -3,3 +3,5 @@ demo/merge/index-build.js
 demo/merge2/index-build.js
 demo/history/index-build.js
 dist/
+.nyc_output
+coverage

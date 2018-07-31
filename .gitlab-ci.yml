@@ -1,0 +1,11 @@
+image: registry.gitlab.com/mpapp-private/manuscripts-frontend/node8-aws
+
+stages:
+  - build
+
+build:
+  stage: build
+  script:
+    - yarn install
+    - yarn run build
+    - yarn run coverage
