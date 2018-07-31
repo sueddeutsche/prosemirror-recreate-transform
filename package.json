@@ -7,8 +7,9 @@
     "scripts": {
         "test": "echo \"Error: no test specified\" && exit 1",
         "build": "npm run build_js && npm run build_demo_js && npm run build_css",
-        "build_demo_js": "npm run build_merge_demo_js && npm run build_history_demo_js",
+        "build_demo_js": "npm run build_merge_demo_js && npm run build_merge2_demo_js && npm run build_history_demo_js",
         "build_merge_demo_js": "rollup demo/merge/index.js -c -f iife -o demo/merge/index-build.js",
+        "build_merge2_demo_js": "rollup demo/merge2/index.js -c -f iife -o demo/merge2/index-build.js",
         "build_history_demo_js": "rollup demo/history/index.js -c -f iife -o demo/history/index-build.js",
         "build_js": "rollup src/index.js -c -f cjs -o dist/index.js",
         "build_css": "cat node_modules/prosemirror-example-setup/style/style.css node_modules/prosemirror-gapcursor/style/gapcursor.css node_modules/prosemirror-menu/style/menu.css > dist/style.css",
