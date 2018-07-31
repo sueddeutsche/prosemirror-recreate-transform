@@ -9,3 +9,8 @@ build:
     - yarn install
     - yarn run build
     - yarn run coverage
+  artifacts:
+    paths:
+      - ./coverage
+    expire_in: 1 week
+    when: always
