@@ -1,6 +1,4 @@
-const {Schema} = require("prosemirror-model")
-const {EditorState, Selection, TextSelection, NodeSelection} = require("prosemirror-state")
-const {schema, eq, doc, blockquote, pre, h1, h2, p, li, ol, ul, em, strong, hr, img} = require("prosemirror-test-builder")
+const {doc, blockquote, h1, h2, p, em, strong} = require("prosemirror-test-builder")
 const ist = require("ist")
 
 const {recreateTransform} = require("../dist/index")
