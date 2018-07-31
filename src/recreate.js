@@ -28,7 +28,6 @@ function getReplaceStep(fromDoc, toDoc) {
             endB += overlap
         }
     }
-    //this.tr.replace(start, endB, toDoc.slice(start, endA))
     return new ReplaceStep(start, endB, toDoc.slice(start, endA))
 }
 
@@ -69,16 +68,34 @@ class RecreateTransform {
         // First step: find content changing steps.
         while (this.ops.length) {
             let op = this.ops.shift(),
-                pathParts = op.path.split('/')
+                ops = [op],
+                pathParts = op.path.split('/'),
+                afterStepJSON = JSON.parse(JSON.stringify(this.currentJSON)),
+                toDoc = false
+            while (!toDoc) {
+                applyPatch(afterStepJSON, [op])
+                try {
+                    toDoc = this.schema.nodeFromJSON(afterStepJSON)
+                    toDoc.check()
+                } catch(error) {
+                    toDoc = false
+                    if (this.ops.length) {
+                        op = this.ops.shift()
+                        ops.push(op)
+                    } else {
+                        throw new Error('No valid diff possible!')
+                    }
+                }
+            }
 
-            if (this.complexSteps && (pathParts.includes('attrs') || pathParts.includes('type'))) {
+            if (this.complexSteps && ops.length === 1 && (pathParts.includes('attrs') || pathParts.includes('type'))) {
                 // Node markup is changing
                 this.addSetNodeMarkup()
-            } else if (op.op === 'replace' && pathParts[pathParts.length-1] === 'text') {
+            } else if (ops.length === 1 && op.op === 'replace' && pathParts[pathParts.length-1] === 'text') {
                 // Text is being replaced, we apply text diffing to find the smallest possible diffs.
-                this.addReplaceTextSteps(op)
+                this.addReplaceTextSteps(op, afterStepJSON)
             } else {
-                this.addReplaceStep(op)
+                this.addReplaceStep(toDoc, afterStepJSON)
             }
 
         }
@@ -119,16 +136,13 @@ class RecreateTransform {
     }
 
     // From http://prosemirror.net/examples/footnote/
-    addReplaceStep(op) {
-        let afterStepJSON = JSON.parse(JSON.stringify(this.currentJSON))
-        applyPatch(afterStepJSON, [op])
-        let fromDoc = this.schema.nodeFromJSON(this.currentJSON),
-            toDoc = this.schema.nodeFromJSON(afterStepJSON),
-            step = getReplaceStep(fromDoc, toDoc)
-
-        if (step) {
+    addReplaceStep(toDoc, afterStepJSON) {
+        let fromDoc = this.schema.nodeFromJSON(this.currentJSON)
+        let step = getReplaceStep(fromDoc, toDoc)
+        if (step && !this.tr.maybeStep(step).failed) {
             this.currentJSON = afterStepJSON
-            this.tr.step(step)
+        } else {
+            throw(new Error('No valid step found.'))
         }
     }
 
@@ -146,8 +160,7 @@ class RecreateTransform {
         }
     }
 
-    addReplaceTextSteps(op) {
-
+    addReplaceTextSteps(op, afterStepJSON) {
         // We find the position number of the first character in the string
         let op1 = Object.assign({}, op, {value: 'xx'}),
             op2 = Object.assign({}, op, {value: 'yy'}),
@@ -208,6 +221,7 @@ class RecreateTransform {
                 offset += diff.value.length
             }
         }
+        this.currentJSON = afterStepJSON
 
     }
 

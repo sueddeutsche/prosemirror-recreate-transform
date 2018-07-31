@@ -5,7 +5,7 @@
     "main": "dist/index.js",
     "module": "src/index.js",
     "scripts": {
-        "test": "echo \"Error: no test specified\" && exit 1",
+        "test": "mocha test/test-*.js",
         "build": "npm run build_js && npm run build_demo_js && npm run build_css",
         "build_demo_js": "npm run build_merge_demo_js && npm run build_merge2_demo_js && npm run build_history_demo_js",
         "build_merge_demo_js": "rollup demo/merge/index.js -c -f iife -o demo/merge/index-build.js",
@@ -38,7 +38,10 @@
         "rfc6902": "^2.2.2"
     },
     "devDependencies": {
-        "jshint": "^2.9.5",
+        "ist": "^1.0.2",
+        "jshint": "^2.9.6",
+        "mocha": "^5.2.0",
+        "prosemirror-test-builder": "^1.0.1",
         "rollup": "^0.59.4",
         "rollup-plugin-commonjs": "^9.1.3",
         "rollup-plugin-node-resolve": "^3.3.0"
