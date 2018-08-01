@@ -6,9 +6,9 @@ stages:
 build:
   stage: build
   script:
-    - yarn install
-    - yarn run build
-    - yarn run coverage
+    - npm install
+    - npm run build
+    - npm run coverage
   artifacts:
     paths:
       - ./coverage
