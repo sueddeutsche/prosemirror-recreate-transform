@@ -4,8 +4,8 @@ const ist = require("ist")
 const {recreateTransform} = require("../dist/index")
 
 
-function diff(startDoc, endDoc, complexSteps, wordDiffs, steps) {
-    let tr = recreateTransform(startDoc, endDoc, complexSteps, wordDiffs)
+function diff(startDoc, endDoc, steps = [], options = {}) {
+    let tr = recreateTransform(startDoc, endDoc, options.complexSteps ? true : false, options.wordDiffs ? true : false)
     ist(JSON.stringify(tr.steps.map(step => step.toJSON())), JSON.stringify(steps))
 }
 
@@ -14,8 +14,6 @@ describe("simpleNodeDiffs", () => {
         diff(
             doc(p("Before textitalicAfter text")),
             doc(p("Before text", em("italic"), "After text")),
-            false,
-            false,
             [{
                 "stepType": "replace",
                 "from": 12,
@@ -37,8 +35,6 @@ describe("simpleNodeDiffs", () => {
         diff(
             doc(p("Before text", strong("bold"), "After text")),
             doc(p("Before textboldAfter text")),
-            false,
-            false,
             [{
                 "stepType": "replace",
                 "from": 12,
@@ -57,8 +53,6 @@ describe("simpleNodeDiffs", () => {
         diff(
             doc(p("A quoted sentence")),
             doc(blockquote(p("A quoted sentence"))),
-            false,
-            false,
             [{
                 "stepType": "replace",
                 "from": 0,
@@ -83,8 +77,6 @@ describe("simpleNodeDiffs", () => {
         diff(
             doc(blockquote(p("A quoted sentence"))),
             doc(p("A quoted sentence")),
-            false,
-            false,
             [{
                 "stepType": "replace",
                 "from": 0,
@@ -106,8 +98,6 @@ describe("simpleNodeDiffs", () => {
         diff(
             doc(h1("A title")),
             doc(h2("A title")),
-            false,
-            false,
             [{
                 "stepType": "replace",
                 "from": 0,
@@ -135,8 +125,6 @@ describe("complexNodeDiffs", () => {
         diff(
             doc(p("Before textitalicAfter text")),
             doc(p("Before text", em("italic"), "After text")),
-            true,
-            false,
             [{
                 "stepType": "addMark",
                 "mark": {
@@ -144,7 +132,8 @@ describe("complexNodeDiffs", () => {
                 },
                 "from": 12,
                 "to": 18
-            }]
+            }],
+            {complexSteps: true}
         )
     )
 
@@ -152,19 +141,15 @@ describe("complexNodeDiffs", () => {
         diff(
             doc(p("Before text", strong("bold"), "After text")),
             doc(p("Before textboldAfter text")),
-            false,
-            false,
             [{
-                "stepType": "replace",
+                "stepType": "removeMark",
+                "mark": {
+                    "type": "strong"
+                },
                 "from": 12,
-                "to": 16,
-                "slice": {
-                    "content": [{
-                        "type": "text",
-                        "text": "bold"
-                    }]
-                }
-            }]
+                "to": 16
+            }],
+            {complexSteps: true}
         )
     )
 
@@ -172,8 +157,6 @@ describe("complexNodeDiffs", () => {
         diff(
             doc(p("A quoted sentence")),
             doc(blockquote(p("A quoted sentence"))),
-            true,
-            false,
             [{
                 "stepType": "replace",
                 "from": 0,
@@ -190,7 +173,8 @@ describe("complexNodeDiffs", () => {
                         }]
                     }]
                 }
-            }]
+            }],
+            {complexSteps: true}
         )
     )
 
@@ -198,8 +182,6 @@ describe("complexNodeDiffs", () => {
         diff(
             doc(blockquote(p("A quoted sentence"))),
             doc(p("A quoted sentence")),
-            true,
-            false,
             [{
                 "stepType": "replace",
                 "from": 0,
@@ -213,7 +195,8 @@ describe("complexNodeDiffs", () => {
                         }]
                     }]
                 }
-            }]
+            }],
+            {complexSteps: true}
         )
     )
 
@@ -221,8 +204,6 @@ describe("complexNodeDiffs", () => {
         diff(
             doc(h1("A title")),
             doc(h2("A title")),
-            true,
-            false,
             [{
                 "stepType": "replaceAround",
                 "from": 0,
@@ -239,7 +220,8 @@ describe("complexNodeDiffs", () => {
                     }]
                 },
                 "structure": true
-            }]
+            }],
+            {complexSteps: true}
         )
     )
 
@@ -250,8 +232,6 @@ describe("textDiffs", () => {
         diff(
             doc(blockquote(p("The start text"))),
             doc(blockquote(p("The end text"))),
-            true,
-            false,
             [{"stepType":"replace", "from":6, "to":11, "slice":{"content":[{"type":"text","text":"end"}]}}]
         )
     )
@@ -260,8 +240,6 @@ describe("textDiffs", () => {
         diff(
             doc(blockquote(p("The start text"), p("The second text"))),
             doc(blockquote(p("The end text"), p("The second sentence"))),
-            true,
-            false,
             [{
                 "stepType": "replace",
                 "from": 6,
@@ -300,8 +278,6 @@ describe("textDiffs", () => {
         diff(
             doc(blockquote(p("The start text"), p("The second text"))),
             doc(blockquote(p("The end text"), p("The second sentence"))),
-            true,
-            true,
             [{
                 "stepType": "replace",
                 "from": 6,
@@ -322,7 +298,8 @@ describe("textDiffs", () => {
                         "text": "sentence"
                     }]
                 }
-            }]
+            }],
+            {wordDiffs: true}
         )
     )
 
@@ -330,8 +307,6 @@ describe("textDiffs", () => {
         diff(
             doc(blockquote(p("The cat is barking at the house"))),
             doc(blockquote(p("The dog is meauwing in the ship"))),
-            true,
-            false,
             [{
                 "stepType": "replace",
                 "from": 6,
@@ -400,8 +375,6 @@ describe("textDiffs", () => {
         diff(
             doc(blockquote(p("The cat is barking at the house"))),
             doc(blockquote(p("The dog is meauwing in the ship"))),
-            true,
-            true,
             [{
                 "stepType": "replace",
                 "from": 6,
@@ -442,7 +415,8 @@ describe("textDiffs", () => {
                         "text": "ship"
                     }]
                 }
-            }]
+            }],
+            {wordDiffs: true}
         )
     )
 })

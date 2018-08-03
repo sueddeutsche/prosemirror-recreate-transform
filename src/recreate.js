@@ -15,7 +15,7 @@ function getReplaceStep(fromDoc, toDoc) {
         a: endA,
         b: endB
     } = toDoc.content.findDiffEnd(fromDoc.content)
-    let overlap = start - Math.min(endA, endB)
+    const overlap = start - Math.min(endA, endB)
     if (overlap > 0) {
         if (
             // If there is an overlap, there is some freedom of choise in how to calculate the start/end boundary.
@@ -69,9 +69,9 @@ class RecreateTransform {
         while (this.ops.length) {
             let op = this.ops.shift(),
                 ops = [op],
-                pathParts = op.path.split('/'),
                 afterStepJSON = JSON.parse(JSON.stringify(this.currentJSON)),
                 toDoc = false
+            const pathParts = op.path.split('/')
             while (!toDoc) {
                 applyPatch(afterStepJSON, [op])
                 try {
@@ -104,28 +104,28 @@ class RecreateTransform {
     recreateChangeMarkSteps() {
         // Now the documents should be the same, except their marks, so everything should map 1:1.
         // Second step: Iterate through the toDoc and make sure all marks are the same in tr.doc
-
-        this.toDoc.descendants((node, pos) => {
-            if (!node.isInline) {
+        this.toDoc.descendants((tNode, tPos) => {
+            if (!tNode.isInline) {
                 return true
             }
-            Object.values(this.schema.marks).forEach(mark => {
-                let nodeMarks = node.marks.filter(nodeMark => nodeMark.type === mark)
-                if (nodeMarks.length) {
-                    nodeMarks.forEach(nodeMark => this.tr.addMark(pos, pos + node.nodeSize, nodeMark))
-                } else {
-                    this.tr.removeMark(pos, pos + node.nodeSize, mark)
+
+            this.tr.doc.nodesBetween(tPos, tPos + tNode.nodeSize, (fNode, fPos) => {
+                if (!fNode.isInline) {
+                    return true
                 }
-            })
-            let newNode = this.tr.doc.nodeAt(pos)
-            if (newNode.marks.length !== node.marks.length) {
-                // At least one mark is only on the newNode, remove it.
-                newNode.marks.forEach(nodeMark => {
-                    if (!nodeMark.isInSet(node.marks)) {
-                        tr.removeMark(pos, pos + node.nodeSize, nodeMark)
+                const from = Math.max(tPos, fPos),
+                    to = Math.min(tPos + tNode.nodeSize, fPos + fNode.nodeSize)
+                fNode.marks.forEach(nodeMark => {
+                    if (!nodeMark.isInSet(tNode.marks)) {
+                        this.tr.removeMark(from, to, nodeMark)
                     }
                 })
-            }
+                tNode.marks.forEach(nodeMark => {
+                    if (!nodeMark.isInSet(fNode.marks)) {
+                        this.tr.addMark(from, to, nodeMark)
+                    }
+                })
+            })
         })
     }
 
@@ -137,8 +137,8 @@ class RecreateTransform {
 
     // From http://prosemirror.net/examples/footnote/
     addReplaceStep(toDoc, afterStepJSON) {
-        let fromDoc = this.schema.nodeFromJSON(this.currentJSON)
-        let step = getReplaceStep(fromDoc, toDoc)
+        const fromDoc = this.schema.nodeFromJSON(this.currentJSON),
+            step = getReplaceStep(fromDoc, toDoc)
         if (step && !this.tr.maybeStep(step).failed) {
             this.currentJSON = afterStepJSON
         } else {
@@ -147,7 +147,7 @@ class RecreateTransform {
     }
 
     addSetNodeMarkup() {
-        let fromDoc = this.schema.nodeFromJSON(this.currentJSON),
+        const fromDoc = this.schema.nodeFromJSON(this.currentJSON),
             toDoc = this.schema.nodeFromJSON(this.finalJSON),
             start = toDoc.content.findDiffStart(fromDoc.content),
             fromNode = fromDoc.nodeAt(start),
@@ -162,37 +162,40 @@ class RecreateTransform {
 
     addReplaceTextSteps(op, afterStepJSON) {
         // We find the position number of the first character in the string
-        let op1 = Object.assign({}, op, {value: 'xx'}),
-            op2 = Object.assign({}, op, {value: 'yy'}),
-            afterOP1JSON = JSON.parse(JSON.stringify(this.currentJSON)),
-            afterOP2JSON = JSON.parse(JSON.stringify(this.currentJSON))
+        const op1 = Object.assign({}, op, {value: 'xx'}),
+            op2 = Object.assign({}, op, {value: 'yy'})
+
+        let afterOP1JSON = JSON.parse(JSON.stringify(this.currentJSON)),
+            afterOP2JSON = JSON.parse(JSON.stringify(this.currentJSON)),
+            pathParts = op.path.split('/'),
+            obj = this.currentJSON
 
         applyPatch(afterOP1JSON, [op1])
         applyPatch(afterOP2JSON, [op2])
 
-        let op1Doc = this.schema.nodeFromJSON(afterOP1JSON),
-            op2Doc = this.schema.nodeFromJSON(afterOP2JSON),
-            offset = op1Doc.content.findDiffStart(op2Doc.content),
-            marks = op1Doc.resolve(offset+1).marks(),
-            pathParts = op.path.split('/'),
-            obj = this.currentJSON
+        const op1Doc = this.schema.nodeFromJSON(afterOP1JSON),
+            op2Doc = this.schema.nodeFromJSON(afterOP2JSON)
+
+        let offset = op1Doc.content.findDiffStart(op2Doc.content)
+        const marks = op1Doc.resolve(offset+1).marks()
 
         pathParts.shift()
 
         while (pathParts.length) {
-            let pathPart = pathParts.shift()
+            const pathPart = pathParts.shift()
             obj = obj[pathPart]
         }
 
-        let finalText = op.value,
-            currentText = obj,
-            textDiffs = this.wordDiffs ? diffWordsWithSpace(currentText, finalText) : diffChars(currentText, finalText)
+        const finalText = op.value,
+            currentText = obj
+
+        let textDiffs = this.wordDiffs ? diffWordsWithSpace(currentText, finalText) : diffChars(currentText, finalText)
 
         while(textDiffs.length) {
-            let diff = textDiffs.shift()
+            const diff = textDiffs.shift()
             if (diff.added) {
                 if (textDiffs.length && textDiffs[0].removed) {
-                    let nextDiff = textDiffs.shift()
+                    const nextDiff = textDiffs.shift()
                     this.tr.replaceWith(
                         offset,
                         offset + nextDiff.value.length,
@@ -207,7 +210,7 @@ class RecreateTransform {
                 offset += diff.value.length
             } else if (diff.removed) {
                 if (textDiffs.length && textDiffs[0].added) {
-                    let nextDiff = textDiffs.shift()
+                    const nextDiff = textDiffs.shift()
                     this.tr.replaceWith(
                         offset,
                         offset + diff.value.length,
@@ -236,13 +239,12 @@ class RecreateTransform {
         while (oldSteps.length) {
             let step = oldSteps.shift()
             while(
-                (step instanceof ReplaceStep) &&
                 oldSteps.length &&
-                (oldSteps[0] instanceof ReplaceStep) &&
-                step.getMap().map(step.to) === oldSteps[0].from
+                step.merge(oldSteps[0])
             ) {
-                let addedStep = oldSteps.shift()
+                const addedStep = oldSteps.shift()
                 step = getReplaceStep(newTr.doc, addedStep.apply(step.apply(newTr.doc).doc).doc)
+
             }
             newTr.step(step)
         }
