@@ -200,9 +200,9 @@ export class Merge {
         return {merge: new Merge(this.doc, this.changes, conflicts, conflictingSteps1, conflictingSteps2, conflictingChanges)}
     }
 
-    applyAll() {
+    applyAll(user) {
         let steps = this.conflictingSteps.map(([index, step]) => step),
-            tr = new Transform(this.doc)
+            tr = new Transform(this.doc), changes = this.changes
         while(steps.length) {
             let mapped = steps.pop().map(tr.mapping)
             if (mapped && !tr.maybeStep(mapped).failed) {
