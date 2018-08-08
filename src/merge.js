@@ -8,11 +8,12 @@ import {
     recreateTransform
 } from "./recreate"
 
-export function mergeTransforms(tr1, tr2, rebase = false, wordDiffs = false) {
+export function mergeTransforms(tr1, tr2, automerge = true, rebase = false, wordDiffs = false) {
         // Create conflicting steps. Make sure the steps are only ReplaceSteps so they can easily
         // be presented as alternatives to the user.
-    let {tr, changes, tr1NoConflicts, tr2NoConflicts} = automergeTransforms(tr1, tr2),
-
+    let {tr, changes, tr1NoConflicts, tr2NoConflicts} = automerge ?
+            automergeTransforms(tr1, tr2) :
+            noAutomergeTransforms(tr1, tr2),
         // find TRs that move from the docs that come out of the non-conflicting docs to the actual final docs, then map
         // them to the ending of tr.
         tr1Conflict = mapTransform(
@@ -226,6 +227,16 @@ function mapTransform(tr, doc, map) {
 
 function trDoc(tr, index=0) {
     return tr.docs.length > index ? tr.docs[index] : tr.doc
+}
+
+function noAutomergeTransforms(tr1, tr2) {
+    let doc = trDoc(tr1)
+    return {
+        tr: new Transform(doc),
+        changes: ChangeSet.create(doc, {compare: (a,b) => false}),
+        tr1NoConflicts: new Transform(doc),
+        tr2NoConflicts: new Transform(doc)
+    }
 }
 
 function automergeTransforms(tr1, tr2) {

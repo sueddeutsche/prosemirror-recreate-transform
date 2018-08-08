@@ -4,14 +4,14 @@ const ist = require("ist")
 const {recreateTransform} = require("../dist/index")
 
 
-function diff(startDoc, endDoc, steps = [], options = {}) {
-    let tr = recreateTransform(startDoc, endDoc, options.complexSteps ? true : false, options.wordDiffs ? true : false)
+function testRecreate(startDoc, endDoc, steps = [], options = {}) {
+    let tr = recreateTransform(startDoc, endDoc, options.complexSteps, options.wordDiffs)
     ist(JSON.stringify(tr.steps.map(step => step.toJSON())), JSON.stringify(steps))
 }
 
 describe("simpleNodeDiffs", () => {
     it("add em", () =>
-        diff(
+        testRecreate(
             doc(p("Before textitalicAfter text")),
             doc(p("Before text", em("italic"), "After text")),
             [{
@@ -27,12 +27,13 @@ describe("simpleNodeDiffs", () => {
                         "text": "italic"
                     }]
                 }
-            }]
+            }],
+            {complexSteps: false}
         )
     )
 
     it("remove strong", () =>
-        diff(
+        testRecreate(
             doc(p("Before text", strong("bold"), "After text")),
             doc(p("Before textboldAfter text")),
             [{
@@ -45,12 +46,13 @@ describe("simpleNodeDiffs", () => {
                         "text": "bold"
                     }]
                 }
-            }]
+            }],
+            {complexSteps: false}
         )
     )
 
     it("wrap in blockquote", () =>
-        diff(
+        testRecreate(
             doc(p("A quoted sentence")),
             doc(blockquote(p("A quoted sentence"))),
             [{
@@ -69,12 +71,13 @@ describe("simpleNodeDiffs", () => {
                         }]
                     }]
                 }
-            }]
+            }],
+            {complexSteps: false}
         )
     )
 
     it("unwrap from blockquote", () =>
-        diff(
+        testRecreate(
             doc(blockquote(p("A quoted sentence"))),
             doc(p("A quoted sentence")),
             [{
@@ -90,12 +93,13 @@ describe("simpleNodeDiffs", () => {
                         }]
                     }]
                 }
-            }]
+            }],
+            {complexSteps: false}
         )
     )
 
     it("change headline type", () =>
-        diff(
+        testRecreate(
             doc(h1("A title")),
             doc(h2("A title")),
             [{
@@ -114,7 +118,8 @@ describe("simpleNodeDiffs", () => {
                         }]
                     }]
                 }
-            }]
+            }],
+            {complexSteps: false}
         )
     )
 })
@@ -122,7 +127,7 @@ describe("simpleNodeDiffs", () => {
 describe("complexNodeDiffs", () => {
 
     it("add em", () =>
-        diff(
+        testRecreate(
             doc(p("Before textitalicAfter text")),
             doc(p("Before text", em("italic"), "After text")),
             [{
@@ -132,13 +137,12 @@ describe("complexNodeDiffs", () => {
                 },
                 "from": 12,
                 "to": 18
-            }],
-            {complexSteps: true}
+            }]
         )
     )
 
     it("remove strong", () =>
-        diff(
+        testRecreate(
             doc(p("Before text", strong("bold"), "After text")),
             doc(p("Before textboldAfter text")),
             [{
@@ -148,13 +152,12 @@ describe("complexNodeDiffs", () => {
                 },
                 "from": 12,
                 "to": 16
-            }],
-            {complexSteps: true}
+            }]
         )
     )
 
     it("wrap in blockquote", () =>
-        diff(
+        testRecreate(
             doc(p("A quoted sentence")),
             doc(blockquote(p("A quoted sentence"))),
             [{
@@ -173,13 +176,12 @@ describe("complexNodeDiffs", () => {
                         }]
                     }]
                 }
-            }],
-            {complexSteps: true}
+            }]
         )
     )
 
     it("unwrap from blockquote", () =>
-        diff(
+        testRecreate(
             doc(blockquote(p("A quoted sentence"))),
             doc(p("A quoted sentence")),
             [{
@@ -195,13 +197,12 @@ describe("complexNodeDiffs", () => {
                         }]
                     }]
                 }
-            }],
-            {complexSteps: true}
+            }]
         )
     )
 
     it("change headline type", () =>
-        diff(
+        testRecreate(
             doc(h1("A title")),
             doc(h2("A title")),
             [{
@@ -229,7 +230,7 @@ describe("complexNodeDiffs", () => {
 
 describe("textDiffs", () => {
     it("find text diff in one text node", () =>
-        diff(
+        testRecreate(
             doc(blockquote(p("The start text"))),
             doc(blockquote(p("The end text"))),
             [{"stepType":"replace", "from":6, "to":11, "slice":{"content":[{"type":"text","text":"end"}]}}]
@@ -237,7 +238,7 @@ describe("textDiffs", () => {
     )
 
     it("find text diffs in several nodes", () =>
-        diff(
+        testRecreate(
             doc(blockquote(p("The start text"), p("The second text"))),
             doc(blockquote(p("The end text"), p("The second sentence"))),
             [{
@@ -275,7 +276,7 @@ describe("textDiffs", () => {
     )
 
     it("find text diffs in several nodes using word diffs", () =>
-        diff(
+        testRecreate(
             doc(blockquote(p("The start text"), p("The second text"))),
             doc(blockquote(p("The end text"), p("The second sentence"))),
             [{
@@ -304,7 +305,7 @@ describe("textDiffs", () => {
     )
 
     it("find several diffs in same text node", () =>
-        diff(
+        testRecreate(
             doc(blockquote(p("The cat is barking at the house"))),
             doc(blockquote(p("The dog is meauwing in the ship"))),
             [{
@@ -372,7 +373,7 @@ describe("textDiffs", () => {
     )
 
     it("find several diffs in same text using word diffs", () =>
-        diff(
+        testRecreate(
             doc(blockquote(p("The cat is barking at the house"))),
             doc(blockquote(p("The dog is meauwing in the ship"))),
             [{

@@ -239,8 +239,7 @@ class RecreateTransform {
         while (oldSteps.length) {
             let step = oldSteps.shift()
             while(
-                oldSteps.length &&
-                step.merge(oldSteps[0])
+                oldSteps.length && step.merge(oldSteps[0])
             ) {
                 const addedStep = oldSteps.shift()
                 if (step instanceof ReplaceStep && addedStep instanceof ReplaceStep) {
