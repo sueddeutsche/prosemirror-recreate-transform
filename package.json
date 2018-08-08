@@ -6,7 +6,7 @@
     "module": "src/index.js",
     "scripts": {
         "test": "mocha test/test-*.js",
-        "coverage": "nyc --reporter=html --check-coverage --statements 29 --branches 13 --lines 32 --functions 24 mocha test/test-*.js",
+        "coverage": "nyc --reporter=html --check-coverage --statements 29.38 --branches 13.3 --lines 32.81 --functions 25.07 mocha test/test-*.js",
         "build": "npm run build_js && npm run build_demo_js && npm run build_css",
         "build_demo_js": "npm run build_merge_demo_js && npm run build_merge2_demo_js && npm run build_history_demo_js",
         "build_merge_demo_js": "rollup demo/merge/index.js -c -f iife -o demo/merge/index-build.js",
