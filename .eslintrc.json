@@ -1,0 +1,10 @@
+{
+    "extends": "standard",
+    "rules": {
+        "indent": ["error", 4],
+        "space-before-function-paren": 0,
+        "one-var": 0,
+        "quotes": ["error", "single"],
+        "prefer-const": ["error"]
+    }
+}

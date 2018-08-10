@@ -6,7 +6,7 @@
     "module": "src/index.js",
     "scripts": {
         "test": "mocha test/test-*.js",
-        "coverage": "nyc --reporter=html --check-coverage --statements 36.11 --branches 18.9 --lines 39.14 --functions 33.87 mocha test/test-*.js",
+        "coverage": "nyc --reporter=html --check-coverage --statements 36.11 --branches 18.9 --lines 39.13 --functions 33.87 mocha test/test-*.js",
         "build": "npm run build_js && npm run build_demo_js && npm run build_css",
         "build_demo_js": "npm run build_merge_demo_js && npm run build_merge2_demo_js && npm run build_history_demo_js",
         "build_merge_demo_js": "rollup demo/merge/index.js -c -f iife -o demo/merge/index-build.js",
@@ -15,7 +15,7 @@
         "build_js": "rollup src/index.js -c -f cjs -o dist/index.js",
         "build_css": "cat node_modules/prosemirror-example-setup/style/style.css node_modules/prosemirror-gapcursor/style/gapcursor.css node_modules/prosemirror-menu/style/menu.css > dist/style.css",
         "prepare": "npm run build",
-        "check_js": "jshint src/*"
+        "lint": "eslint src/*"
     },
     "keywords": [
         "prosemirror",
@@ -25,8 +25,14 @@
         "diffing"
     ],
     "author": "Johannes Wilm",
+    "types": "index.d.ts",
     "license": "???",
     "dependencies": {
+        "@types/prosemirror-model": "^1.5.0",
+        "@types/prosemirror-schema-basic": "^1.0.1",
+        "@types/prosemirror-schema-list": "^1.0.1",
+        "@types/prosemirror-state": "^1.2.0",
+        "@types/prosemirror-transform": "^1.1.0",
         "diff": "^3.5.0",
         "prosemirror-changeset": "^1.0.3",
         "prosemirror-example-setup": "^1.0.1",
@@ -39,6 +45,12 @@
         "rfc6902": "^2.2.2"
     },
     "devDependencies": {
+        "eslint": "^5.3.0",
+        "eslint-config-standard": "^11.0.0",
+        "eslint-plugin-import": "^2.13.0",
+        "eslint-plugin-node": "^7.0.1",
+        "eslint-plugin-promise": "^3.8.0",
+        "eslint-plugin-standard": "^3.1.0",
         "ist": "^1.0.2",
         "jshint": "^2.9.6",
         "mocha": "^5.2.0",

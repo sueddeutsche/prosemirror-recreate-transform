@@ -45,7 +45,7 @@ let state = EditorState.create({
 window.view1 = new EditorView(document.querySelector("#editor1"), {
     state
 })
-window.view2 = new EditorView(document.querySelector("#editor2"), {
+window.view2 = new EditorView(document.querySelector('#editor2'), {
     state
 })
 
@@ -53,7 +53,6 @@ function getDecos(merge, showMergedChanged) {
     let decos = DecorationSet.empty
     if (showMergedChanged) {
         merge.changes.deleted.forEach(deletion => {
-
             let dom = document.createElement('span')
             dom.setAttribute('class', `automerged deletion user-${deletion.data.user}`)
 

@@ -1,12 +1,12 @@
 import {
     Transform, ReplaceStep
-} from "prosemirror-transform"
+} from 'prosemirror-transform'
 import {
     applyPatch, createPatch
-} from "rfc6902"
-import {diffWordsWithSpace, diffChars} from "diff"
+} from 'rfc6902'
+import {diffWordsWithSpace, diffChars} from 'diff'
 
-function getReplaceStep(fromDoc, toDoc) {
+function getReplaceStep (fromDoc, toDoc) {
     let start = toDoc.content.findDiffStart(fromDoc.content)
     if (start === null) {
         return false
@@ -68,16 +68,16 @@ class RecreateTransform {
         // First step: find content changing steps.
         while (this.ops.length) {
             let op = this.ops.shift(),
-                ops = [op],
-                afterStepJSON = JSON.parse(JSON.stringify(this.currentJSON)),
                 toDoc = false
-            const pathParts = op.path.split('/')
+            const ops = [op],
+                afterStepJSON = JSON.parse(JSON.stringify(this.currentJSON)),
+                pathParts = op.path.split('/')
             while (!toDoc) {
                 applyPatch(afterStepJSON, [op])
                 try {
                     toDoc = this.schema.nodeFromJSON(afterStepJSON)
                     toDoc.check()
-                } catch(error) {
+                } catch (error) {
                     toDoc = false
                     if (this.ops.length) {
                         op = this.ops.shift()
@@ -91,13 +91,12 @@ class RecreateTransform {
             if (this.complexSteps && ops.length === 1 && (pathParts.includes('attrs') || pathParts.includes('type'))) {
                 // Node markup is changing
                 this.addSetNodeMarkup()
-            } else if (ops.length === 1 && op.op === 'replace' && pathParts[pathParts.length-1] === 'text') {
+            } else if (ops.length === 1 && op.op === 'replace' && pathParts[pathParts.length - 1] === 'text') {
                 // Text is being replaced, we apply text diffing to find the smallest possible diffs.
                 this.addReplaceTextSteps(op, afterStepJSON)
             } else {
                 this.addReplaceStep(toDoc, afterStepJSON)
             }
-
         }
     }
 
@@ -130,7 +129,7 @@ class RecreateTransform {
     }
 
     marklessDoc(doc) {
-        let tr = new Transform(doc)
+        const tr = new Transform(doc)
         tr.removeMark(0, doc.nodeSize - 2)
         return tr.doc
     }
@@ -142,7 +141,7 @@ class RecreateTransform {
         if (step && !this.tr.maybeStep(step).failed) {
             this.currentJSON = afterStepJSON
         } else {
-            throw(new Error('No valid step found.'))
+            throw new Error('No valid step found.')
         }
     }
 
@@ -165,10 +164,11 @@ class RecreateTransform {
         const op1 = Object.assign({}, op, {value: 'xx'}),
             op2 = Object.assign({}, op, {value: 'yy'})
 
-        let afterOP1JSON = JSON.parse(JSON.stringify(this.currentJSON)),
+        const afterOP1JSON = JSON.parse(JSON.stringify(this.currentJSON)),
             afterOP2JSON = JSON.parse(JSON.stringify(this.currentJSON)),
-            pathParts = op.path.split('/'),
-            obj = this.currentJSON
+            pathParts = op.path.split('/')
+
+        let obj = this.currentJSON
 
         applyPatch(afterOP1JSON, [op1])
         applyPatch(afterOP2JSON, [op2])
@@ -177,7 +177,7 @@ class RecreateTransform {
             op2Doc = this.schema.nodeFromJSON(afterOP2JSON)
 
         let offset = op1Doc.content.findDiffStart(op2Doc.content)
-        const marks = op1Doc.resolve(offset+1).marks()
+        const marks = op1Doc.resolve(offset + 1).marks()
 
         pathParts.shift()
 
@@ -189,9 +189,9 @@ class RecreateTransform {
         const finalText = op.value,
             currentText = obj
 
-        let textDiffs = this.wordDiffs ? diffWordsWithSpace(currentText, finalText) : diffChars(currentText, finalText)
+        const textDiffs = this.wordDiffs ? diffWordsWithSpace(currentText, finalText) : diffChars(currentText, finalText)
 
-        while(textDiffs.length) {
+        while (textDiffs.length) {
             const diff = textDiffs.shift()
             if (diff.added) {
                 if (textDiffs.length && textDiffs[0].removed) {
@@ -225,7 +225,6 @@ class RecreateTransform {
             }
         }
         this.currentJSON = afterStepJSON
-
     }
 
     // join adjacent ReplaceSteps
@@ -234,13 +233,11 @@ class RecreateTransform {
             return
         }
 
-        let newTr = new Transform(this.tr.docs[0]),
+        const newTr = new Transform(this.tr.docs[0]),
             oldSteps = this.tr.steps.slice()
         while (oldSteps.length) {
             let step = oldSteps.shift()
-            while(
-                oldSteps.length && step.merge(oldSteps[0])
-            ) {
+            while (oldSteps.length && step.merge(oldSteps[0])) {
                 const addedStep = oldSteps.shift()
                 if (step instanceof ReplaceStep && addedStep instanceof ReplaceStep) {
                     step = getReplaceStep(newTr.doc, addedStep.apply(step.apply(newTr.doc).doc).doc)
@@ -252,10 +249,9 @@ class RecreateTransform {
         }
         this.tr = newTr
     }
-
 }
 
 export function recreateTransform(fromDoc, toDoc, complexSteps = true, wordDiffs = false) {
-    let recreator = new RecreateTransform(fromDoc, toDoc, complexSteps, wordDiffs)
+    const recreator = new RecreateTransform(fromDoc, toDoc, complexSteps, wordDiffs)
     return recreator.init()
 }
