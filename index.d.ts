@@ -8,7 +8,7 @@ import { ChangeSet } from "prosemirror-changeset"
 
 // merge.js
 
-export function mergeTransforms(tr1: Transform, tr2: Transform, rebase ?: boolean, wordDiffs ?: boolean): { tr: Transform, merge: Merge }
+export function mergeTransforms(tr1: Transform, tr2: Transform, automerge?: boolean, rebase ?: boolean, wordDiffs ?: boolean): { tr: Transform, merge: Merge }
 
 export type StepPair = [Step<any>, Step<any>]
 
