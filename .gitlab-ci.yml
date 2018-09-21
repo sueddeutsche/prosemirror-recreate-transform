@@ -1,7 +1,12 @@
 image: registry.gitlab.com/mpapp-private/manuscripts-frontend/node8-aws
 
+before_script:
+  - npm config set //atypon-npm-registry.herokuapp.com/:_authToken ${ATYPON_REGISTRY_NPM_TOKEN}
+
 stages:
   - build
+  - test
+  - deploy
 
 build:
   stage: build
@@ -14,3 +19,23 @@ build:
       - ./coverage
     expire_in: 1 week
     when: always
+
+test:
+  stage: test
+  script:
+    - npm install
+    - npm test
+  tags:
+    - nodejs
+
+publish:
+  stage: deploy
+  only:
+    refs:
+      - master
+  script:
+    - echo Running release
+    - npm install
+    - npm publish
+  tags:
+    - nodejs

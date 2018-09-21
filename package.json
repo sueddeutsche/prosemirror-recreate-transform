@@ -1,6 +1,6 @@
 {
-    "name": "prosemirror-recreate-steps",
-    "version": "0.1.0",
+    "name": "@manuscripts/prosemirror-recreate-steps",
+    "version": "0.1.1",
     "description": "Find and merge changes between two prosemirror documents without access to the steps.",
     "main": "dist/index.js",
     "module": "src/index.js",
@@ -24,6 +24,9 @@
         "merging",
         "diffing"
     ],
+    "publishConfig": {
+      "@manuscripts:registry": "https://atypon-npm-registry.herokuapp.com/"
+    },
     "author": "Johannes Wilm",
     "types": "index.d.ts",
     "license": "???",

@@ -1,4 +1,4 @@
-import { Transform, ReplaceStep } from "prosemirror-transform"
+import { Mapping, Transform, ReplaceStep, Step } from "prosemirror-transform"
 import { Node, Schema } from "prosemirror-model"
 
 import { applyPatch, Operation } from "rfc6902"
