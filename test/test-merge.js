@@ -7,10 +7,10 @@ const {recreateTransform, mergeTransforms} = require("../dist/index")
 function testMerge(startDoc, endDoc1, endDoc2, automergeSteps, conflictingSteps1, conflictingSteps2, options = {}) {
     const tr1 = recreateTransform(startDoc, endDoc1, options.complexSteps, options.wordDiffs),
         tr2 = recreateTransform(startDoc, endDoc2, options.complexSteps, options.wordDiffs)
-        merge = mergeTransforms(tr1, tr2, options.automerge, options.rebase, options.wordDiffs)
+    const merge = mergeTransforms(tr1, tr2, options.automerge, options.rebase, options.wordDiffs)
     ist(JSON.stringify(merge.tr.steps.map(step => step.toJSON())), JSON.stringify(automergeSteps))
-    ist(JSON.stringify(merge.merge.conflictingSteps1.map(step => step[1].toJSON())), JSON.stringify(conflictingSteps1))
-    ist(JSON.stringify(merge.merge.conflictingSteps2.map(step => step[1].toJSON())), JSON.stringify(conflictingSteps2))
+    ist(JSON.stringify(merge.merge.conflictingSteps1.map(step => step[1] ? step[1].toJSON() : false).filter(step => step)), JSON.stringify(conflictingSteps1))
+    ist(JSON.stringify(merge.merge.conflictingSteps2.map(step => step[1] ? step[1].toJSON() : false).filter(step => step)), JSON.stringify(conflictingSteps2))
 }
 
 
@@ -322,6 +322,153 @@ describe("textMerges", () => {
                 "to": 31
             }],
             {rebase: true, wordDiffs: true, automerge: false}
+        )
+    )
+})
+
+describe("complex merges", () => {
+
+    it("Change of contents and structure", () =>
+        testMerge(
+            doc(h1("The title"), p("The fish are ", em("great!"))),
+            doc(h2("A different title"), p("A ", strong("different"), " sentence.")),
+            doc(p("Yet another ", em("first"), " line."), p("With a second line that is not styled.")),
+            [{
+                "stepType": "removeMark",
+                "mark": {
+                    "type": "em"
+                },
+                "from": 27,
+                "to": 28
+            }, {
+                "stepType": "removeMark",
+                "mark": {
+                    "type": "em"
+                },
+                "from": 29,
+                "to": 30
+            }, {
+                "stepType": "replace",
+                "from": 5,
+                "to": 6,
+                "slice": {
+                    "content": [{
+                        "type": "text",
+                        "text": "f"
+                    }]
+                }
+            }, {
+                "stepType": "replace",
+                "from": 7,
+                "to": 7,
+                "slice": {
+                    "content": [{
+                        "type": "text",
+                        "text": "rs"
+                    }]
+                }
+            }, {
+                "stepType": "replace",
+                "from": 10,
+                "to": 10,
+                "slice": {
+                    "content": [{
+                        "type": "text",
+                        "text": " "
+                    }]
+                }
+            }, {
+                "stepType": "replace",
+                "from": 12,
+                "to": 12,
+                "slice": {
+                    "content": [{
+                        "type": "text",
+                        "text": "in"
+                    }]
+                }
+            }, {
+                "stepType": "addMark",
+                "mark": {
+                    "type": "em"
+                },
+                "from": 5,
+                "to": 10
+            }, {
+                "stepType": "removeMark",
+                "mark": {
+                    "type": "em"
+                },
+                "from": 32,
+                "to": 33
+            }, {
+                "stepType": "removeMark",
+                "mark": {
+                    "type": "em"
+                },
+                "from": 33,
+                "to": 35
+            }],
+            [{
+                "stepType": "replace",
+                "from": 0,
+                "to": 16,
+                "slice": {
+                    "content": [{
+                        "type": "heading",
+                        "attrs": {
+                            "level": 2
+                        },
+                        "content": [{
+                            "type": "text",
+                            "text": "The title"
+                        }]
+                    }]
+                }
+            }, {
+                "stepType": "replace",
+                "from": 22,
+                "to": 34,
+                "slice": {
+                    "content": [{
+                        "type": "text",
+                        "text": "A"
+                    }]
+                }
+            }],
+            [{
+                "stepType": "replace",
+                "from": 0,
+                "to": 16,
+                "slice": {
+                    "content": [{
+                        "type": "paragraph",
+                        "content": [{
+                            "type": "text",
+                            "text": "The "
+                        }, {
+                            "type": "text",
+                            "marks": [{
+                                "type": "em"
+                            }],
+                            "text": "first"
+                        }, {
+                            "type": "text",
+                            "text": " line"
+                        }]
+                    }]
+                }
+            }, {
+                "stepType": "replace",
+                "from": 17,
+                "to": 36,
+                "slice": {
+                    "content": [{
+                        "type": "text",
+                        "text": "With a second line that is not styled."
+                    }]
+                }
+            }]
         )
     )
 })

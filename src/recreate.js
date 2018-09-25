@@ -66,12 +66,13 @@ class RecreateTransform {
 
     recreateChangeContentSteps() {
         // First step: find content changing steps.
+        let ops = []
         while (this.ops.length) {
             let op = this.ops.shift(),
                 toDoc = false
-            const ops = [op],
-                afterStepJSON = JSON.parse(JSON.stringify(this.currentJSON)),
+            const afterStepJSON = JSON.parse(JSON.stringify(this.currentJSON)),
                 pathParts = op.path.split('/')
+            ops.push(op)
             while (!toDoc) {
                 applyPatch(afterStepJSON, [op])
                 try {
@@ -91,11 +92,15 @@ class RecreateTransform {
             if (this.complexSteps && ops.length === 1 && (pathParts.includes('attrs') || pathParts.includes('type'))) {
                 // Node markup is changing
                 this.addSetNodeMarkup()
+                ops = []
             } else if (ops.length === 1 && op.op === 'replace' && pathParts[pathParts.length - 1] === 'text') {
                 // Text is being replaced, we apply text diffing to find the smallest possible diffs.
                 this.addReplaceTextSteps(op, afterStepJSON)
+                ops = []
             } else {
-                this.addReplaceStep(toDoc, afterStepJSON)
+                if (this.addReplaceStep(toDoc, afterStepJSON)) {
+                    ops = []
+                }
             }
         }
     }
@@ -138,7 +143,9 @@ class RecreateTransform {
     addReplaceStep(toDoc, afterStepJSON) {
         const fromDoc = this.schema.nodeFromJSON(this.currentJSON),
             step = getReplaceStep(fromDoc, toDoc)
-        if (step && !this.tr.maybeStep(step).failed) {
+        if (!step) {
+            return false
+        } else if (!this.tr.maybeStep(step).failed) {
             this.currentJSON = afterStepJSON
         } else {
             throw new Error('No valid step found.')

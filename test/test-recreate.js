@@ -156,6 +156,113 @@ describe("complexNodeDiffs", () => {
         )
     )
 
+    it("add em and strong", () =>
+        testRecreate(
+            doc(p("Before textitalic/boldAfter text")),
+            doc(p("Before text", strong(em("italic/bold")), "After text")),
+            [{
+                "stepType": "addMark",
+                "mark": {
+                    "type": "em"
+                },
+                "from": 12,
+                "to": 23
+            },
+            {
+                "stepType": "addMark",
+                "mark": {
+                    "type": "strong"
+                },
+                "from": 12,
+                "to": 23
+            }]
+        )
+    )
+
+    it("replace em and strong", () =>
+        testRecreate(
+            doc(p("Before textitalic/boldAfter text")),
+            doc(p("Before text", strong(em("italic/bold")), "After text")),
+            [{
+                "stepType": "addMark",
+                "mark": {
+                    "type": "em"
+                },
+                "from": 12,
+                "to": 23
+            },
+            {
+                "stepType": "addMark",
+                "mark": {
+                    "type": "strong"
+                },
+                "from": 12,
+                "to": 23
+            }]
+        )
+    )
+
+    it("replace em with strong", () =>
+        testRecreate(
+            doc(p("Before text", em("styled"), "After text")),
+            doc(p("Before text", strong("styled"), "After text")),
+            [{
+                "stepType": "removeMark",
+                "mark": {
+                    "type": "em"
+                },
+                "from": 12,
+                "to": 18
+            },
+            {
+                "stepType": "addMark",
+                "mark": {
+                    "type": "strong"
+                },
+                "from": 12,
+                "to": 18
+            }]
+        )
+    )
+
+    it("replace em with strong in different parts", () =>
+        testRecreate(
+            doc(p("Before text", em("styledAfter text"))),
+            doc(p(strong("Before textstyled"), "After text")),
+            [{
+                "stepType": "addMark",
+                "mark": {
+                    "type": "strong"
+                },
+                "from": 1,
+                "to": 12
+            }, {
+                "stepType": "removeMark",
+                "mark": {
+                    "type": "em"
+                },
+                "from": 12,
+                "to": 18
+            }, {
+                "stepType": "addMark",
+                "mark": {
+                    "type": "strong"
+                },
+                "from": 12,
+                "to": 18
+            }, {
+                "stepType": "removeMark",
+                "mark": {
+                    "type": "em"
+                },
+                "from": 18,
+                "to": 28
+            }]
+        )
+    )
+
+
+
     it("wrap in blockquote", () =>
         testRecreate(
             doc(p("A quoted sentence")),

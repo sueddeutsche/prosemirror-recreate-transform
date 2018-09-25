@@ -15,7 +15,7 @@ export function mergeTransforms(tr1, tr2, automerge = true, rebase = false, word
         automerge
             ? automergeTransforms(tr1, tr2)
             : noAutomergeTransforms(tr1, tr2),
-        // find TRs that move from the docs that come out of the non-conflicting docs to the actual final docs, then map
+        // Find TRs that move from the docs that come out of the non-conflicting docs to the actual final docs, then map
         // them to the ending of tr.
         tr1Conflict = mapTransform(
             recreateTransform(
@@ -26,8 +26,8 @@ export function mergeTransforms(tr1, tr2, automerge = true, rebase = false, word
             ),
             tr.doc,
             new Mapping(tr1NoConflicts.mapping.invert().maps.concat(tr.mapping.maps))
-        ),
-        tr2Conflict = mapTransform(
+        )
+    const tr2Conflict = mapTransform(
             recreateTransform(
                 tr2NoConflicts.doc,
                 tr2.doc,
@@ -219,8 +219,15 @@ function mapTransform(tr, doc, map) {
     const newTr = new Transform(doc)
     tr.steps.forEach(step => {
         const mapped = step.map(map)
+
         if (mapped) {
-            newTr.maybeStep(mapped)
+            try {
+                newTr.maybeStep(mapped)
+            } catch (error) {
+                if(!error.name === 'ReplaceError') {
+                    throw error
+                }
+            }
         }
     })
     return newTr
@@ -356,6 +363,9 @@ function createConflictingChanges(tr1Conflict, tr2Conflict) {
 
     iter.forEach(({steps, user}) =>
         steps.forEach(([index, step]) => {
+            if (!step) {
+                return
+            }
             const stepResult = step.apply(doc)
             // We need the potential changes if this step was to be applied. We find
             // the inversion of the change so that we can place it in the current doc.
