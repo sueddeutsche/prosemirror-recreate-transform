@@ -29,7 +29,7 @@
     },
     "author": "Johannes Wilm",
     "types": "index.d.ts",
-    "license": "???",
+    "license": "Apache-2.0",
     "dependencies": {
         "@types/prosemirror-model": "^1.5.0",
         "@types/prosemirror-schema-basic": "^1.0.1",

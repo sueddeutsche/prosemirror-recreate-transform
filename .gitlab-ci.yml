@@ -1,4 +1,4 @@
-image: registry.gitlab.com/mpapp-private/manuscripts-frontend/node8-aws
+#image: registry.gitlab.com/mpapp-private/manuscripts-frontend/node8-aws
 
 before_script:
   - npm config set //atypon-npm-registry.herokuapp.com/:_authToken ${ATYPON_REGISTRY_NPM_TOKEN}
