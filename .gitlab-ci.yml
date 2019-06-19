@@ -1,8 +1,5 @@
 #image: registry.gitlab.com/mpapp-private/manuscripts-frontend/node8-aws
 
-before_script:
-  - npm config set //atypon-npm-registry.herokuapp.com/:_authToken ${ATYPON_REGISTRY_NPM_TOKEN}
-
 stages:
   - build
   - test
@@ -11,7 +8,7 @@ stages:
 build:
   stage: build
   script:
-    - npm install
+    - npm ci
     - npm run build
     - npm run coverage
   artifacts:
@@ -23,7 +20,7 @@ build:
 test:
   stage: test
   script:
-    - npm install
+    - npm ci
     - npm test
   tags:
     - nodejs
@@ -35,7 +32,7 @@ publish:
       - master
   script:
     - echo Running release
-    - npm install
-    - npm publish
+    - npm ci
+    - npx @manuscripts/publish
   tags:
     - nodejs
