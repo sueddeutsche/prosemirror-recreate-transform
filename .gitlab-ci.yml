@@ -10,20 +10,23 @@ build:
   script:
     - npm ci
     - npm run build
-    - npm run coverage
   artifacts:
     paths:
-      - ./coverage
-    expire_in: 1 week
-    when: always
+      - dist/
 
 test:
   stage: test
   script:
     - npm ci
     - npm test
+    - npm run coverage
   tags:
     - nodejs
+  artifacts:
+    paths:
+      - coverage/
+    expire_in: 1 week
+    when: always
 
 publish:
   stage: deploy
@@ -31,7 +34,6 @@ publish:
     refs:
       - master
   script:
-    - echo Running release
     - npm ci
     - npx @manuscripts/publish
   tags:

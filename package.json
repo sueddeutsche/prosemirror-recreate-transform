@@ -4,6 +4,10 @@
     "description": "Find and merge changes between two prosemirror documents without access to the steps.",
     "main": "dist/index.js",
     "module": "src/index.js",
+    "files": [
+        "dist",
+        "src"
+    ],
     "repository": "gitlab:mpapp-public/prosemirror-recreate-steps",
     "scripts": {
         "test": "mocha test/test-*.js",
@@ -15,7 +19,6 @@
         "build_history_demo_js": "rollup demo/history/index.js -c -f iife -o demo/history/index-build.js",
         "build_js": "rollup src/index.js -c -f cjs -o dist/index.js",
         "build_css": "cat node_modules/prosemirror-example-setup/style/style.css node_modules/prosemirror-gapcursor/style/gapcursor.css node_modules/prosemirror-menu/style/menu.css > dist/style.css",
-        "prepare": "npm run build",
         "lint": "eslint src/*"
     },
     "keywords": [
