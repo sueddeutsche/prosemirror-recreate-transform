@@ -4,6 +4,7 @@
     "description": "Find and merge changes between two prosemirror documents without access to the steps.",
     "main": "dist/index.js",
     "module": "src/index.js",
+    "repository": "gitlab:mpapp-public/prosemirror-recreate-steps",
     "scripts": {
         "test": "mocha test/test-*.js",
         "coverage": "nyc --reporter=html --check-coverage --statements 36.11 --branches 18.9 --lines 39.13 --functions 33.87 mocha test/test-*.js",
