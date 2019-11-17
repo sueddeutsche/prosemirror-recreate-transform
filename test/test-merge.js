@@ -211,6 +211,91 @@ describe("textMerges", () => {
         )
     )
 
+    it.only("rebase, wordDiff, automerge, complexSteps", () =>
+        testMerge(
+            doc(p("Money in a big box")),
+            doc(p("Money inside a shoe z")),
+            doc(p("Money outsiiiide a smaaaaaall box")),
+            [{
+                "stepType": "replace",
+                "from": 7,
+                "to": 13,
+                "slice": {
+                    "content": [{
+                        "type": "text",
+                        "text": "outsiiiide"
+                    }]
+                }
+            }, {
+                "stepType": "replace",
+                "from": 14,
+                "to": 15,
+                "slice": {
+                    "content": [{
+                        "type": "text",
+                        "text": "smaaaaaallig"
+                    }]
+                }
+            }, {
+                "stepType": "replace",
+                "from": 16,
+                "to": 21
+            }],
+            [{
+                "stepType": "replace",
+                "from": 7,
+                "to": 13,
+                "slice": {
+                    "content": [{
+                        "type": "text",
+                        "text": "outsiiiide"
+                    }]
+                }
+            }, {
+                "stepType": "replace",
+                "from": 14,
+                "to": 15,
+                "slice": {
+                    "content": [{
+                        "type": "text",
+                        "text": "smaaaaaallig"
+                    }]
+                }
+            }, {
+                "stepType": "replace",
+                "from": 16,
+                "to": 21
+            }],
+            [{
+                "stepType": "replace",
+                "from": 7,
+                "to": 13,
+                "slice": {
+                    "content": [{
+                        "type": "text",
+                        "text": "outsiiiide"
+                    }]
+                }
+            }, {
+                "stepType": "replace",
+                "from": 14,
+                "to": 15,
+                "slice": {
+                    "content": [{
+                        "type": "text",
+                        "text": "smaaaaaallig"
+                    }]
+                }
+            }, {
+                "stepType": "replace",
+                "from": 16,
+                "to": 21
+            }],
+            {rebase: true, wordDiffs: true, complexSteps: true, automerge: true}
+        )
+    )
+
+
     it("rebase", () =>
         testMerge(
             doc(p("This is the initial text line")),
