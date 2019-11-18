@@ -1,7 +1,7 @@
-const {doc, blockquote, h1, h2, p, em, strong} = require("prosemirror-test-builder")
-const ist = require("ist")
+import {doc, blockquote, h1, h2, p, em, strong} from "prosemirror-test-builder"
+import ist from "ist"
 
-const {recreateTransform, mergeTransforms} = require("../dist/index")
+import {recreateTransform, mergeTransforms} from "../src/index"
 
 
 function testMerge(startDoc, endDoc1, endDoc2, automergeSteps, conflictingSteps1, conflictingSteps2, options = {}) {
@@ -216,6 +216,8 @@ describe("textMerges", () => {
             doc(p("Money in a big box")),
             doc(p("Money inside a shoe z")),
             doc(p("Money outsiiiide a smaaaaaall box")),
+            [],
+            [],
             [{
                 "stepType": "replace",
                 "from": 7,
@@ -241,57 +243,7 @@ describe("textMerges", () => {
                 "from": 16,
                 "to": 21
             }],
-            [{
-                "stepType": "replace",
-                "from": 7,
-                "to": 13,
-                "slice": {
-                    "content": [{
-                        "type": "text",
-                        "text": "outsiiiide"
-                    }]
-                }
-            }, {
-                "stepType": "replace",
-                "from": 14,
-                "to": 15,
-                "slice": {
-                    "content": [{
-                        "type": "text",
-                        "text": "smaaaaaallig"
-                    }]
-                }
-            }, {
-                "stepType": "replace",
-                "from": 16,
-                "to": 21
-            }],
-            [{
-                "stepType": "replace",
-                "from": 7,
-                "to": 13,
-                "slice": {
-                    "content": [{
-                        "type": "text",
-                        "text": "outsiiiide"
-                    }]
-                }
-            }, {
-                "stepType": "replace",
-                "from": 14,
-                "to": 15,
-                "slice": {
-                    "content": [{
-                        "type": "text",
-                        "text": "smaaaaaallig"
-                    }]
-                }
-            }, {
-                "stepType": "replace",
-                "from": 16,
-                "to": 21
-            }],
-            {rebase: true, wordDiffs: true, complexSteps: true, automerge: true}
+            {rebase: true, wordDiffs: true, automerge: true, complexSteps: true}
         )
     )
 
@@ -419,6 +371,22 @@ describe("complex merges", () => {
             doc(h2("A different title"), p("A ", strong("different"), " sentence.")),
             doc(p("Yet another ", em("first"), " line."), p("With a second line that is not styled.")),
             [{
+                "stepType": "replaceAround",
+                "from": 0,
+                "to": 11,
+                "gapFrom": 1,
+                "gapTo": 10,
+                "insert": 1,
+                "slice": {
+                    "content": [{
+                        "type": "heading",
+                        "attrs": {
+                            "level": 2
+                        }
+                    }]
+                },
+                "structure": true
+            }, {
                 "stepType": "removeMark",
                 "mark": {
                     "type": "em"
@@ -473,6 +441,16 @@ describe("complex merges", () => {
                     }]
                 }
             }, {
+                "stepType": "replace",
+                "from": 15,
+                "to": 15,
+                "slice": {
+                    "content": [{
+                        "type": "text",
+                        "text": "."
+                    }]
+                }
+            }, {
                 "stepType": "addMark",
                 "mark": {
                     "type": "em"
@@ -484,69 +462,90 @@ describe("complex merges", () => {
                 "mark": {
                     "type": "em"
                 },
-                "from": 32,
-                "to": 33
+                "from": 33,
+                "to": 34
             }, {
                 "stepType": "removeMark",
                 "mark": {
                     "type": "em"
                 },
-                "from": 33,
-                "to": 35
+                "from": 34,
+                "to": 36
             }],
             [{
                 "stepType": "replace",
-                "from": 0,
-                "to": 16,
+                "from": 1,
+                "to": 3,
                 "slice": {
                     "content": [{
-                        "type": "heading",
-                        "attrs": {
-                            "level": 2
-                        },
-                        "content": [{
-                            "type": "text",
-                            "text": "The title"
-                        }]
+                        "type": "text",
+                        "text": "A diff"
                     }]
                 }
             }, {
                 "stepType": "replace",
-                "from": 22,
-                "to": 34,
+                "from": 7,
+                "to": 7,
+                "slice": {
+                    "content": [{
+                        "type": "text",
+                        "text": "rent"
+                    }]
+                }
+            }, {
+                "stepType": "replace",
+                "from": 18,
+                "to": 21,
                 "slice": {
                     "content": [{
                         "type": "text",
                         "text": "A"
                     }]
                 }
-            }],
-            [{
+            }, {
                 "stepType": "replace",
-                "from": 0,
-                "to": 16,
+                "from": 22,
+                "to": 33,
                 "slice": {
                     "content": [{
-                        "type": "paragraph",
-                        "content": [{
-                            "type": "text",
-                            "text": "The "
-                        }, {
-                            "type": "text",
-                            "marks": [{
-                                "type": "em"
-                            }],
-                            "text": "first"
-                        }, {
-                            "type": "text",
-                            "text": " line"
-                        }]
+                        "type": "text",
+                        "marks": [{
+                            "type": "strong"
+                        }],
+                        "text": "gr"
                     }]
                 }
             }, {
                 "stepType": "replace",
-                "from": 17,
-                "to": 36,
+                "from": 22,
+                "to": 37,
+                "slice": {
+                    "content": [{
+                        "type": "text",
+                        "marks": [{
+                            "type": "strong"
+                        }],
+                        "text": "different"
+                    }, {
+                        "type": "text",
+                        "text": " sentence."
+                    }]
+                }
+            }],
+            [{
+                "stepType": "replace",
+                "from": 1,
+                "to": 4,
+                "slice": {
+                    "content": [{
+                        "type": "text",
+                        "text": "Yet another"
+                    }]
+                }
+            }, {
+                "stepType": "replace",
+                "from": 18,
+                "to": 37,
                 "slice": {
                     "content": [{
                         "type": "text",

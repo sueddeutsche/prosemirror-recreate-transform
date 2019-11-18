@@ -4,7 +4,7 @@ import {
 import {
     applyPatch, createPatch
 } from 'rfc6902'
-import {diffWordsWithSpace, diffChars} from 'diff'
+import { diffWordsWithSpace, diffChars } from 'diff'
 
 function getReplaceStep (fromDoc, toDoc) {
     let start = toDoc.content.findDiffStart(fromDoc.content)
@@ -168,8 +168,8 @@ class RecreateTransform {
 
     addReplaceTextSteps(op, afterStepJSON) {
         // We find the position number of the first character in the string
-        const op1 = Object.assign({}, op, {value: 'xx'}),
-            op2 = Object.assign({}, op, {value: 'yy'})
+        const op1 = Object.assign({}, op, { value: 'xx' }),
+            op2 = Object.assign({}, op, { value: 'yy' })
 
         const afterOP1JSON = JSON.parse(JSON.stringify(this.currentJSON)),
             afterOP2JSON = JSON.parse(JSON.stringify(this.currentJSON)),
@@ -206,12 +206,12 @@ class RecreateTransform {
                     this.tr.replaceWith(
                         offset,
                         offset + nextDiff.value.length,
-                        this.schema.nodeFromJSON({type: 'text', text: diff.value}).mark(marks)
+                        this.schema.nodeFromJSON({ type: 'text', text: diff.value }).mark(marks)
                     )
                 } else {
                     this.tr.insert(
                         offset,
-                        this.schema.nodeFromJSON({type: 'text', text: diff.value}).mark(marks)
+                        this.schema.nodeFromJSON({ type: 'text', text: diff.value }).mark(marks)
                     )
                 }
                 offset += diff.value.length
@@ -221,7 +221,7 @@ class RecreateTransform {
                     this.tr.replaceWith(
                         offset,
                         offset + diff.value.length,
-                        this.schema.nodeFromJSON({type: 'text', text: nextDiff.value}).mark(marks)
+                        this.schema.nodeFromJSON({ type: 'text', text: nextDiff.value }).mark(marks)
                     )
                     offset += nextDiff.value.length
                 } else {

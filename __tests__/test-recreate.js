@@ -1,5 +1,5 @@
-const {doc, blockquote, h1, h2, p, em, strong} = require("prosemirror-test-builder")
-const ist = require("ist")
+import {doc, blockquote, h1, h2, p, em, strong} from "prosemirror-test-builder"
+import ist from "ist"
 
 const {recreateTransform} = require("../dist/index")
 
