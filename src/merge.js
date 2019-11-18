@@ -37,7 +37,6 @@ export function mergeTransforms(tr1, tr2, automerge = true, rebase = false, word
             tr.doc,
             new Mapping(tr2NoConflicts.mapping.invert().maps.concat(tr.mapping.maps))
         )
-
     if (rebase) {
         // rebase on tr1.doc -- makes all changes relative to user 1
         return rebaseMergedTransform(tr1.doc, tr1Conflict.doc, tr2Conflict.doc, wordDiffs)
@@ -213,9 +212,11 @@ export class Merge {
 
 function mapTransform(tr, doc, map) {
     const newTr = new Transform(doc)
+    const trMap = new Mapping()
+    const failMap = new Mapping()
     tr.steps.forEach(step => {
-        const mapped = step.map(map)
-
+        const mapped = step.map(trMap.invert()).map(map).map(trMap).map(failMap)
+        trMap.appendMap(step.getMap())
         if (mapped) {
             try {
                 newTr.maybeStep(mapped)
@@ -224,6 +225,8 @@ function mapTransform(tr, doc, map) {
                     throw error
                 }
             }
+        } else {
+            failMap.appendMap(step.getMap().invert())
         }
     })
     return newTr
@@ -248,10 +251,9 @@ function automergeTransforms(tr1, tr2) {
     const doc = trDoc(tr1),
         conflicts = findConflicts(tr1, tr2),
         tr = new Transform(doc)
-    let changes = ChangeSet.create(doc, { compare: (a, b) => false })
+    let changes = ChangeSet.create(doc)
     const tr1NoConflicts = removeConflictingSteps(tr1, conflicts.map(conflict => conflict[0])),
         tr2NoConflicts = removeConflictingSteps(tr2, conflicts.map(conflict => conflict[1]))
-
     tr1NoConflicts.steps.forEach(step => tr.maybeStep(step))
     const numberSteps1 = tr.steps.length
     changes = changes.addSteps(tr.doc, tr.mapping.maps, { user: 1 })
@@ -262,7 +264,6 @@ function automergeTransforms(tr1, tr2) {
         }
     })
     changes = changes.addSteps(tr.doc, tr.mapping.maps.slice(numberSteps1), { user: 2 })
-
     return { tr, changes, tr1NoConflicts, tr2NoConflicts }
 }
 
@@ -286,8 +287,8 @@ function removeConflictingSteps(tr, conflicts) {
 
 function findConflicts(tr1, tr2) {
     const changes1 = findContentChanges(tr1),
-        changes2 = findContentChanges(tr2),
-        conflicts = []
+        changes2 = findContentChanges(tr2)
+    let conflicts = []
     changes1.forEach(change1 => {
         changes2.forEach(change2 => {
             if (!(change1.toA < change2.fromA || change1.fromA > change2.toA)) {
@@ -301,6 +302,15 @@ function findConflicts(tr1, tr2) {
                 })
             }
         })
+    })
+    // Remove duplicates
+    const combinations = []
+    conflicts = conflicts.filter(conflict => {
+        if (combinations.includes(conflict[0]+'-'+conflict[1])) {
+            return false
+        }
+        combinations.push(conflict[0]+'-'+conflict[1])
+        return true
     })
 
     return conflicts

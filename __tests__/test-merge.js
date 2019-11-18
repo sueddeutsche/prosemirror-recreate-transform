@@ -6,8 +6,8 @@ import {recreateTransform, mergeTransforms} from "../src/index"
 
 function testMerge(startDoc, endDoc1, endDoc2, automergeSteps, conflictingSteps1, conflictingSteps2, options = {}) {
     const tr1 = recreateTransform(startDoc, endDoc1, options.complexSteps, options.wordDiffs),
-        tr2 = recreateTransform(startDoc, endDoc2, options.complexSteps, options.wordDiffs)
-    const merge = mergeTransforms(tr1, tr2, options.automerge, options.rebase, options.wordDiffs)
+        tr2 = recreateTransform(startDoc, endDoc2, options.complexSteps, options.wordDiffs),
+        merge = mergeTransforms(tr1, tr2, options.automerge, options.rebase, options.wordDiffs)
     ist(JSON.stringify(merge.tr.steps.map(step => step.toJSON())), JSON.stringify(automergeSteps))
     ist(JSON.stringify(merge.merge.conflictingSteps1.map(step => step[1] ? step[1].toJSON() : false).filter(step => step)), JSON.stringify(conflictingSteps1))
     ist(JSON.stringify(merge.merge.conflictingSteps2.map(step => step[1] ? step[1].toJSON() : false).filter(step => step)), JSON.stringify(conflictingSteps2))
@@ -230,18 +230,14 @@ describe("textMerges", () => {
                 }
             }, {
                 "stepType": "replace",
-                "from": 14,
-                "to": 15,
+                "from": 16,
+                "to": 20,
                 "slice": {
                     "content": [{
                         "type": "text",
-                        "text": "smaaaaaallig"
+                        "text": "smaaaaaall"
                     }]
                 }
-            }, {
-                "stepType": "replace",
-                "from": 16,
-                "to": 21
             }],
             {rebase: true, wordDiffs: true, automerge: true, complexSteps: true}
         )
