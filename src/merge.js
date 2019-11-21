@@ -212,21 +212,12 @@ export class Merge {
 
 function mapTransform(tr, doc, map) {
     const newTr = new Transform(doc)
-    const trMap = new Mapping()
-    const failMap = new Mapping()
+    const maps = map.maps.slice()
     tr.steps.forEach(step => {
-        const mapped = step.map(trMap.invert()).map(map).map(trMap).map(failMap)
-        trMap.appendMap(step.getMap())
-        if (mapped) {
-            try {
-                newTr.maybeStep(mapped)
-            } catch (error) {
-                if (!error.name === 'ReplaceError') {
-                    throw error
-                }
-            }
-        } else {
-            failMap.appendMap(step.getMap().invert())
+        const mapped = step.map(new Mapping(maps))
+        maps.unshift(step.getMap().invert())
+        if (mapped && !newTr.maybeStep(mapped).failed) {
+            maps.push(mapped.getMap())
         }
     })
     return newTr
