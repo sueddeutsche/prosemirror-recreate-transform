@@ -17,8 +17,7 @@ export function mergeTransforms(tr1, tr2, automerge = true, rebase = false, word
             recreateTransform(
                 tr1NoConflicts.doc,
                 tr1.doc,
-                false,
-                wordDiffs
+                { complexSteps: false, wordDiffs }
             ),
             tr.doc,
             // @ts-ignore
@@ -28,8 +27,7 @@ export function mergeTransforms(tr1, tr2, automerge = true, rebase = false, word
         recreateTransform(
             tr2NoConflicts.doc,
             tr2.doc,
-            false,
-            wordDiffs
+            { complexSteps: false, wordDiffs }
         ),
         tr.doc,
         // @ts-ignore
@@ -48,9 +46,9 @@ export function mergeTransforms(tr1, tr2, automerge = true, rebase = false, word
 }
 
 function rebaseMergedTransform(doc, nonConflictingDoc, conflictingDoc, wordDiffs) {
-    const trNonConflict = recreateTransform(doc, nonConflictingDoc, true, wordDiffs),
+    const trNonConflict = recreateTransform(doc, nonConflictingDoc, { complexSteps: true, wordDiffs }),
         changes = ChangeSet.create(doc, { compare: (a, b) => false }).addSteps(nonConflictingDoc, trNonConflict.mapping.maps, { user: 2 }),
-        trConflict = recreateTransform(nonConflictingDoc, conflictingDoc, false, wordDiffs),
+        trConflict = recreateTransform(nonConflictingDoc, conflictingDoc, { complexSteps: false, wordDiffs }),
         {
             inserted,
             deleted,

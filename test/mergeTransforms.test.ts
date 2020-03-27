@@ -14,8 +14,8 @@ interface Options {
 
 
 function testMerge(startDoc, endDoc1, endDoc2, automergeSteps, conflictingSteps1, conflictingSteps2, options: Options = {}) {
-    const tr1 = recreateTransform(startDoc, endDoc1, options.complexSteps, options.wordDiffs);
-    const tr2 = recreateTransform(startDoc, endDoc2, options.complexSteps, options.wordDiffs);
+    const tr1 = recreateTransform(startDoc, endDoc1, options);
+    const tr2 = recreateTransform(startDoc, endDoc2, options);
 
     const merge = mergeTransforms(tr1, tr2, options.automerge, options.rebase, options.wordDiffs);
 

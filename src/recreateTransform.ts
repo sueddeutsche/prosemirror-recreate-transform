@@ -8,10 +8,7 @@ function getReplaceStep(fromDoc, toDoc) {
     if (start === null) {
         return false;
     }
-    let {
-        a: endA,
-        b: endB
-    } = toDoc.content.findDiffEnd(fromDoc.content);
+    let { a: endA, b: endB } = toDoc.content.findDiffEnd(fromDoc.content);
     const overlap = start - Math.min(endA, endB);
     if (overlap > 0) {
         if (
@@ -29,6 +26,12 @@ function getReplaceStep(fromDoc, toDoc) {
 }
 
 
+export interface Options {
+    complexSteps?: boolean;
+    wordDiffs?: boolean;
+}
+
+
 export class RecreateTransform {
     fromDoc: any;
     toDoc: any;
@@ -40,11 +43,17 @@ export class RecreateTransform {
     finalJSON: any;
     ops: Array<any>;
 
-    constructor(fromDoc, toDoc, complexSteps, wordDiffs) {
+    constructor(fromDoc, toDoc, options: Options = {}) {
+        const o = {
+            complexSteps: true,
+            wordDiffs: false,
+            ...options
+        };
+
         this.fromDoc = fromDoc;
         this.toDoc = toDoc;
-        this.complexSteps = complexSteps; // Whether to return steps other than ReplaceSteps
-        this.wordDiffs = wordDiffs; // Whether to make text diffs cover entire words
+        this.complexSteps = o.complexSteps; // Whether to return steps other than ReplaceSteps
+        this.wordDiffs = o.wordDiffs; // Whether to make text diffs cover entire words
         this.schema = fromDoc.type.schema;
         this.tr = new Transform(fromDoc);
     }
@@ -265,7 +274,8 @@ export class RecreateTransform {
     }
 }
 
-export function recreateTransform(fromDoc, toDoc, complexSteps = true, wordDiffs = false) {
-    const recreator = new RecreateTransform(fromDoc, toDoc, complexSteps, wordDiffs);
+export function recreateTransform(fromDoc, toDoc, options: Options = {}) {
+    // const options = { complexSteps, wordDiffs };
+    const recreator = new RecreateTransform(fromDoc, toDoc, options);
     return recreator.init();
 }

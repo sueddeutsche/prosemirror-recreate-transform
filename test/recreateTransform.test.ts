@@ -11,7 +11,7 @@ interface Options {
 }
 
 function testRecreate(startDoc, endDoc, steps = [], options: Options = {}) {
-    const tr = recreateTransform(startDoc, endDoc, options.complexSteps, options.wordDiffs);
+    const tr = recreateTransform(startDoc, endDoc, options);
     assert.equal(JSON.stringify(tr.steps.map(step => step.toJSON())), JSON.stringify(steps));
 }
 
