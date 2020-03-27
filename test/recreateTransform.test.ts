@@ -1,14 +1,8 @@
-
 import pmTestBuilder from "prosemirror-test-builder";
 import { strict as assert } from "assert";
-import { recreateTransform } from "../src/recreateTransform";
+import { recreateTransform, Options } from "../src/recreateTransform";
 const { doc, blockquote, h1, h2, p, em, strong } = pmTestBuilder;
 
-
-interface Options {
-    complexSteps?: boolean;
-    wordDiffs?: boolean;
-}
 
 function testRecreate(startDoc, endDoc, steps = [], options: Options = {}) {
     const tr = recreateTransform(startDoc, endDoc, options);

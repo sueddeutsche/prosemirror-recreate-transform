@@ -16,19 +16,17 @@ interface Options {
 function testMerge(startDoc, endDoc1, endDoc2, automergeSteps, conflictingSteps1, conflictingSteps2, options: Options = {}) {
     const tr1 = recreateTransform(startDoc, endDoc1, options);
     const tr2 = recreateTransform(startDoc, endDoc2, options);
-
     const merge = mergeTransforms(tr1, tr2, options.automerge, options.rebase, options.wordDiffs);
-
     assert.equal(
         JSON.stringify(merge.tr.steps.map(step => step.toJSON()), null, 2),
         JSON.stringify(automergeSteps, null, 2)
     );
-
+    // @ts-ignore
     assert.equal(
         JSON.stringify(merge.merge.conflictingSteps1.map(step => (step[1] ? step[1].toJSON() : false)).filter(step => step), null, 2),
         JSON.stringify(conflictingSteps1, null, 2)
     );
-
+    // @ts-ignore
     assert.equal(
         JSON.stringify(merge.merge.conflictingSteps2.map(step => (step[1] ? step[1].toJSON() : false)).filter(step => step), null, 2),
         JSON.stringify(conflictingSteps2, null, 2)
@@ -235,6 +233,39 @@ describe("mergeTransforms", () => {
             )
         );
 
+        it("rebase, wordDiff, automerge, complexSteps", () =>
+            testMerge(
+                doc(p("Money in a big box")),
+                doc(p("Money inside a shoe z")),
+                doc(p("Money outsiiiide a smaaaaaall box")),
+                [],
+                [],
+                [{
+                    stepType: "replace",
+                    from: 7,
+                    to: 13,
+                    slice: {
+                        content: [{
+                            type: "text",
+                            text: "outsiiiide"
+                        }]
+                    }
+                }, {
+                    stepType: "replace",
+                    from: 16,
+                    to: 20,
+                    slice: {
+                        content: [{
+                            type: "text",
+                            text: "smaaaaaall"
+                        }]
+                    }
+                }],
+                { rebase: true, wordDiffs: true, automerge: true, complexSteps: true }
+            )
+        );
+
+
         it("rebase", () =>
             testMerge(
                 doc(p("This is the initial text line")),
@@ -359,6 +390,22 @@ describe("mergeTransforms", () => {
                 doc(h2("A different title"), p("A ", strong("different"), " sentence.")),
                 doc(p("Yet another ", em("first"), " line."), p("With a second line that is not styled.")),
                 [{
+                    stepType: "replaceAround",
+                    from: 0,
+                    to: 11,
+                    gapFrom: 1,
+                    gapTo: 10,
+                    insert: 1,
+                    slice: {
+                        content: [{
+                            type: "heading",
+                            attrs: {
+                                level: 2
+                            }
+                        }]
+                    },
+                    structure: true
+                }, {
                     stepType: "removeMark",
                     mark: {
                         type: "em"
@@ -413,6 +460,16 @@ describe("mergeTransforms", () => {
                         }]
                     }
                 }, {
+                    stepType: "replace",
+                    from: 15,
+                    to: 15,
+                    slice: {
+                        content: [{
+                            type: "text",
+                            text: "."
+                        }]
+                    }
+                }, {
                     stepType: "addMark",
                     mark: {
                         type: "em"
@@ -424,69 +481,90 @@ describe("mergeTransforms", () => {
                     mark: {
                         type: "em"
                     },
-                    from: 32,
-                    to: 33
+                    from: 33,
+                    to: 34
                 }, {
                     stepType: "removeMark",
                     mark: {
                         type: "em"
                     },
-                    from: 33,
-                    to: 35
+                    from: 34,
+                    to: 36
                 }],
                 [{
                     stepType: "replace",
-                    from: 0,
-                    to: 16,
+                    from: 1,
+                    to: 3,
                     slice: {
                         content: [{
-                            type: "heading",
-                            attrs: {
-                                level: 2
-                            },
-                            content: [{
-                                type: "text",
-                                text: "The title"
-                            }]
+                            type: "text",
+                            text: "A diff"
                         }]
                     }
                 }, {
                     stepType: "replace",
-                    from: 22,
-                    to: 34,
+                    from: 7,
+                    to: 7,
+                    slice: {
+                        content: [{
+                            type: "text",
+                            text: "rent"
+                        }]
+                    }
+                }, {
+                    stepType: "replace",
+                    from: 18,
+                    to: 21,
                     slice: {
                         content: [{
                             type: "text",
                             text: "A"
                         }]
                     }
-                }],
-                [{
+                }, {
                     stepType: "replace",
-                    from: 0,
-                    to: 16,
+                    from: 22,
+                    to: 33,
                     slice: {
                         content: [{
-                            type: "paragraph",
-                            content: [{
-                                type: "text",
-                                text: "The "
-                            }, {
-                                type: "text",
-                                marks: [{
-                                    type: "em"
-                                }],
-                                text: "first"
-                            }, {
-                                type: "text",
-                                text: " line"
-                            }]
+                            type: "text",
+                            marks: [{
+                                type: "strong"
+                            }],
+                            text: "gr"
                         }]
                     }
                 }, {
                     stepType: "replace",
-                    from: 17,
-                    to: 36,
+                    from: 22,
+                    to: 37,
+                    slice: {
+                        content: [{
+                            type: "text",
+                            marks: [{
+                                type: "strong"
+                            }],
+                            text: "different"
+                        }, {
+                            type: "text",
+                            text: " sentence."
+                        }]
+                    }
+                }],
+                [{
+                    stepType: "replace",
+                    from: 1,
+                    to: 4,
+                    slice: {
+                        content: [{
+                            type: "text",
+                            text: "Yet another"
+                        }]
+                    }
+                }, {
+                    stepType: "replace",
+                    from: 18,
+                    to: 37,
                     slice: {
                         content: [{
                             type: "text",
