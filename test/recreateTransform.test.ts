@@ -1,7 +1,7 @@
 
 import pmTestBuilder from "prosemirror-test-builder";
 import { strict as assert } from "assert";
-import { recreateTransform } from "../src/recreate";
+import { recreateTransform } from "../src/recreateTransform";
 const { doc, blockquote, h1, h2, p, em, strong } = pmTestBuilder;
 
 

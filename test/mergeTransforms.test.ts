@@ -1,8 +1,8 @@
 /* eslint max-len: "off" */
 import pmTestBuilder from "prosemirror-test-builder";
 import { strict as assert } from "assert";
-import { recreateTransform } from "../src/recreate";
-import { mergeTransforms } from "../src/merge";
+import { recreateTransform } from "../src/recreateTransform";
+import { mergeTransforms } from "../src/mergeTransforms";
 const { doc, h1, h2, p, em, strong } = pmTestBuilder;
 
 interface Options {

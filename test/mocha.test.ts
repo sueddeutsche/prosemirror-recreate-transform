@@ -1,5 +1,5 @@
 import { strict as assert } from "assert";
-import { recreateTransform } from "../src/recreate";
+import { recreateTransform } from "../src/recreateTransform";
 
 
 describe("mocha setup", () => {

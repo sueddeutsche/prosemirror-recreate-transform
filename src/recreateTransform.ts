@@ -2,6 +2,7 @@ import { Transform, ReplaceStep } from "prosemirror-transform";
 import { applyPatch, createPatch } from "rfc6902";
 import { diffWordsWithSpace, diffChars } from "diff";
 
+
 function getReplaceStep(fromDoc, toDoc) {
     let start = toDoc.content.findDiffStart(fromDoc.content);
     if (start === null) {
@@ -27,7 +28,8 @@ function getReplaceStep(fromDoc, toDoc) {
     return new ReplaceStep(start, endB, toDoc.slice(start, endA));
 }
 
-class RecreateTransform {
+
+export class RecreateTransform {
     fromDoc: any;
     toDoc: any;
     complexSteps: boolean;

@@ -1,7 +1,7 @@
 /* eslint no-use-before-define: "off", @typescript-eslint/no-use-before-define: "off" */
 import { Transform, Mapping } from "prosemirror-transform";
 import { ChangeSet } from "prosemirror-changeset";
-import { recreateTransform } from "./recreate";
+import { recreateTransform } from "./recreateTransform";
 
 
 export function mergeTransforms(tr1, tr2, automerge = true, rebase = false, wordDiffs = false) {
