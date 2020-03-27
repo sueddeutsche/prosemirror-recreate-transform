@@ -1,2 +1,2 @@
-export { recreateTransform, RecreateTransform } from "./recreateTransform";
-export { mergeTransforms } from "./mergeTransforms";
+export { recreateTransform, RecreateTransform, Options } from "./recreateTransform";
+export { mergeTransforms, Merge } from "./mergeTransforms";
