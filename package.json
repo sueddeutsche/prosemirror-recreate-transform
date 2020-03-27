@@ -1,27 +1,19 @@
 {
-    "name": "@manuscripts/prosemirror-recreate-steps",
-    "version": "0.1.4",
+    "name": "@technik-sde/prosemirror-recreate-steps",
+    "version": "0.1",
     "description": "Find and merge changes between two prosemirror documents without access to the steps.",
-    "main": "dist/index.js",
+    "main": "src/index.js",
     "module": "src/index.js",
     "types": "index.d.ts",
-    "files": [
-        "dist",
-        "src",
-        "index.d.ts"
-    ],
-    "repository": "gitlab:mpapp-public/prosemirror-recreate-steps",
+    "engines": {
+        "node": ">=10.0.0"
+    },
+    "repository": "",
     "scripts": {
-        "test": "mocha test/test-*.js",
-        "coverage": "nyc --reporter=html --check-coverage --statements 36.11 --branches 18.9 --lines 39.13 --functions 33.87 mocha test/test-*.js",
-        "build": "npm run build_js && npm run build_demo_js && npm run build_css",
-        "build_demo_js": "npm run build_merge_demo_js && npm run build_merge2_demo_js && npm run build_history_demo_js",
-        "build_merge_demo_js": "rollup demo/merge/index.js -c -f iife -o demo/merge/index-build.js",
-        "build_merge2_demo_js": "rollup demo/merge2/index.js -c -f iife -o demo/merge2/index-build.js",
-        "build_history_demo_js": "rollup demo/history/index.js -c -f iife -o demo/history/index-build.js",
-        "build_js": "rollup src/index.js -c -f cjs -o dist/index.js",
-        "build_css": "cat node_modules/prosemirror-example-setup/style/style.css node_modules/prosemirror-gapcursor/style/gapcursor.css node_modules/prosemirror-menu/style/menu.css > dist/style.css",
-        "lint": "eslint src/*"
+        "build": "webpack",
+        "lint": "eslint --ext .js,.ts src",
+        "test": "webpack --config webpack.mocha.js --display errors-only",
+        "test:watch": "webpack --watch --config webpack.mocha.js --display minimal"
     },
     "keywords": [
         "prosemirror",
@@ -30,7 +22,7 @@
         "merging",
         "diffing"
     ],
-    "author": "Johannes Wilm",
+    "author": "",
     "license": "Apache-2.0",
     "dependencies": {
         "@types/prosemirror-model": "^1.5.0",
@@ -50,24 +42,33 @@
         "rfc6902": "^3.0.1"
     },
     "devDependencies": {
-        "@manuscripts/publish": "^0.2.1",
-        "eslint": "^5.6.0",
-        "eslint-config-standard": "^12.0.0",
-        "eslint-plugin-import": "^2.14.0",
-        "eslint-plugin-node": "^7.0.1",
-        "eslint-plugin-promise": "^4.0.1",
-        "eslint-plugin-standard": "^4.0.0",
-        "ist": "^1.1.1",
-        "jshint": "^2.9.6",
-        "mocha": "^5.2.0",
-        "nyc": "^13.0.1",
+        "@technik-sde/eslint-config-sz.cms": "^5.0.0",
+        "@types/mocha": "^7.0.2",
+        "@typescript-eslint/eslint-plugin": "^2.25.0",
+        "@typescript-eslint/parser": "^2.25.0",
+        "css-loader": "^3.4.2",
+        "eslint": "^6.8.0",
+        "eslint-plugin-array-func": "^3.1.4",
+        "eslint-plugin-ava": "^10.2.0",
+        "eslint-plugin-node": "^11.0.0",
+        "eslint-plugin-optimize-regex": "^1.1.7",
+        "eslint-plugin-promise": "^4.2.1",
+        "extract-loader": "^5.0.1",
+        "file-loader": "^6.0.0",
+        "glob": "^7.1.6",
+        "html-loader": "^1.0.0",
+        "jsdom": "^16.2.1",
+        "mocha": "^7.1.1",
         "prosemirror-test-builder": "^1.0.1",
-        "rollup": "^0.66.2",
-        "rollup-plugin-commonjs": "^9.1.8",
-        "rollup-plugin-node-resolve": "^3.4.0"
-    },
-    "jshintConfig": {
-        "esversion": 6,
-        "asi": true
+        "sass-loader": "^8.0.2",
+        "source-map-support": "^0.5.16",
+        "style-loader": "^1.1.3",
+        "ts-loader": "^6.2.2",
+        "typescript": "^3.8.3",
+        "url-loader": "^4.0.0",
+        "webpack": "^4.42.1",
+        "webpack-cli": "^3.3.11",
+        "webpack-dev-server": "^3.10.3",
+        "webpack-shell-plugin-next": "^1.1.7"
     }
 }
