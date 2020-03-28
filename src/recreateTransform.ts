@@ -72,14 +72,17 @@ export class RecreateTransform {
         // First step: find content changing steps.
         let ops = [];
         while (this.ops.length) {
+            // get next
             let op = this.ops.shift();
             ops.push(op);
 
             let toDoc;
-            const afterStepJSON = copy(this.currentJSON);
+            const afterStepJSON = copy(this.currentJSON); // working document receiving patches
             const pathParts = op.path.split("/");
 
-            // collect operations until we receive a valid document
+            // collect operations until we receive a valid document:
+            // apply ops-patches until a valid prosemirror document is retrieved,
+            // then try to create a transformation step or retry with next operation
             while (toDoc == null) {
                 applyPatch(afterStepJSON, [op]);
 
@@ -99,10 +102,10 @@ export class RecreateTransform {
                 }
             }
 
-            // apply the set of operations
+            // apply operation (ignoring afterStepJSON)
             if (this.complexSteps && ops.length === 1 && (pathParts.includes("attrs") || pathParts.includes("type"))) {
                 // Node markup is changing
-                this.addSetNodeMarkup();
+                this.addSetNodeMarkup(); // a lost update is ignored
                 ops = [];
 
             } else if (ops.length === 1 && op.op === "replace" && pathParts[pathParts.length - 1] === "text") {
@@ -115,6 +118,29 @@ export class RecreateTransform {
                 ops = [];
             }
         }
+    }
+
+    /** update node with attrs and marks, may also change type */
+    addSetNodeMarkup() {
+        // first diff in document is supposed to be a node-change (in type and/or attributes)
+        // thus simply find the first change and apply a node change step, then recalculate the diff
+        // after updating the document
+        const fromDoc = this.schema.nodeFromJSON(this.currentJSON);
+        const toDoc = this.schema.nodeFromJSON(this.finalJSON);
+        const start = toDoc.content.findDiffStart(fromDoc.content);
+        // @note start is the same (first) position for current and target document
+        const fromNode = fromDoc.nodeAt(start);
+        const toNode = toDoc.nodeAt(start);
+
+        if (start != null) {
+            const nodeType = fromNode.type === toNode.type ? null : toNode.type;
+            this.tr.setNodeMarkup(start, nodeType, toNode.attrs, toNode.marks);
+            this.currentJSON = removeMarks(this.tr.doc).toJSON();
+            // setting the node markup may have invalidated the following ops, so we calculate them again.
+            this.ops = createPatch(this.currentJSON, this.finalJSON);
+            return true;
+        }
+        return false;
     }
 
     recreateChangeMarkSteps() {
@@ -162,23 +188,6 @@ export class RecreateTransform {
         }
 
         throw new Error("No valid step found.");
-    }
-
-    /** update node with attrs and marks, may also change type */
-    addSetNodeMarkup() {
-        const fromDoc = this.schema.nodeFromJSON(this.currentJSON);
-        const toDoc = this.schema.nodeFromJSON(this.finalJSON);
-        const start = toDoc.content.findDiffStart(fromDoc.content);
-        const fromNode = fromDoc.nodeAt(start);
-        const toNode = toDoc.nodeAt(start);
-
-        if (start != null) {
-            const nodeType = fromNode.type === toNode.type ? null : toNode.type;
-            this.tr.setNodeMarkup(start, nodeType, toNode.attrs, toNode.marks);
-            this.currentJSON = removeMarks(this.tr.doc).toJSON();
-            // Setting the node markup may have invalidated more ops, so we calculate them again.
-            this.ops = createPatch(this.currentJSON, this.finalJSON);
-        }
     }
 
     /** retrieve and possibly apply text replace-steps based from doc changes */
