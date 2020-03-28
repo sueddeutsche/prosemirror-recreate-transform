@@ -1,31 +1,26 @@
 const path = require("path");
+const PRODUCTION = process.argv.some(arg => arg === "-p" || arg === "--production");
+
 
 const config = {
 
     entry: [
-        "./src/index.ts"
+        "./src/recreateTransform.ts"
     ],
-    mode: "development",
+    mode: PRODUCTION ? "production" : "development",
     context: __dirname,
     target: "web",
     devtool: "source-map",
     output: {
         filename: "[name].js",
-        path: path.resolve(__dirname, "dev")
+        path: path.resolve(__dirname, PRODUCTION ? "dist" : "dev")
+        // library: "recreateTransform",
+        // libraryTarget: "umd"
     },
 
     resolve: {
         extensions: [".tsx", ".ts", ".js"],
-        alias: {
-            mitt: path.resolve(path.join(__dirname, "./node_modules/mitt/dist/mitt.js")),
-            mithril: path.resolve(path.join(__dirname, "./node_modules/mithril")),
-            "prosemirror-gapcursor": path.resolve(path.join(__dirname, "./node_modules/prosemirror-gapcursor/src")),
-            "prosemirror-model": path.resolve(path.join(__dirname, "./node_modules/prosemirror-model/src")),
-            "prosemirror-transform": path.resolve(path.join(__dirname, "./node_modules/prosemirror-transform")),
-            editron: path.resolve(path.join(__dirname, "./node_modules/editron")),
-            "json-schema-library": path.resolve(path.join(__dirname, "./node_modules/json-schema-library")),
-            "@technik-sde/foxy": path.resolve(path.join(__dirname, "./node_modules/@technik-sde/foxy/src/index"))
-        }
+        alias: {}
     },
 
     module: {

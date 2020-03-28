@@ -4,12 +4,14 @@
     "description": "Find and merge changes between two prosemirror documents without access to the steps.",
     "main": "src/recreateTransform.ts",
     "module": "src/recreateTransform.ts",
+    "types": "dist/src/recreateTransform.d.ts",
     "engines": {
         "node": ">=10.0.0"
     },
     "repository": "",
     "scripts": {
-        "build": "webpack",
+        "build": "rm -rf dev; webpack",
+        "dist": "rm -rf dist; webpack -p",
         "lint": "eslint --ext .js,.ts src",
         "test": "webpack --config webpack.mocha.js --display errors-only",
         "test:watch": "webpack --watch --config webpack.mocha.js --display minimal"

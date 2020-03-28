@@ -1,6 +1,7 @@
 {
     "compilerOptions": {
-        "outDir": "./ts/",
+        "declaration": true,
+        "outDir": "./dist/",
         "module": "es2015",
         "target": "es2015",
         "allowJs": true,

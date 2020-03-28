@@ -28,5 +28,4 @@ node_modules
 /artifact
 /dev
 /testbuild
-/build
-/dist
+/ts
