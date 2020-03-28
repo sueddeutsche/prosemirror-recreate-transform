@@ -1,50 +1,55 @@
-import { Transform, ReplaceStep } from "prosemirror-transform";
-import { applyPatch, createPatch } from "rfc6902";
+import { Transform, ReplaceStep, Step } from "prosemirror-transform";
+import { Node, Schema } from "prosemirror-model";
+import { applyPatch, createPatch, Operation } from "rfc6902";
 import { diffWordsWithSpace, diffChars } from "diff";
+import { AnyObject } from "./types";
+
 
 export interface Options {
     complexSteps?: boolean;
     wordDiffs?: boolean;
 }
 
-function getReplaceStep(fromDoc, toDoc) {
+const cp = <T>(v: T): T => JSON.parse(JSON.stringify(v));
+
+
+function getReplaceStep(fromDoc: AnyObject, toDoc: Node) {
     let start = toDoc.content.findDiffStart(fromDoc.content);
     if (start === null) {
         return false;
     }
-    let {
-        a: endA,
-        b: endB
-    } = toDoc.content.findDiffEnd(fromDoc.content);
+
+    let { a: endA, b: endB } = toDoc.content.findDiffEnd(fromDoc.content);
     const overlap = start - Math.min(endA, endB);
     if (overlap > 0) {
-        if (
-            // If there is an overlap, there is some freedom of choise in how to calculate the start/end boundary.
-            // for an inserted/removed slice. We choose the extreme with the lowest depth value.
-            fromDoc.resolve(start - overlap).depth < toDoc.resolve(endA + overlap).depth
-        ) {
+        // If there is an overlap, there is some freedom of choice in how to calculate the
+        // start/end boundary. for an inserted/removed slice. We choose the extreme with
+        // the lowest depth value.
+        if (fromDoc.resolve(start - overlap).depth < toDoc.resolve(endA + overlap).depth) {
             start -= overlap;
+
         } else {
             endA += overlap;
             endB += overlap;
         }
     }
+
     return new ReplaceStep(start, endB, toDoc.slice(start, endA));
 }
 
 
 export class RecreateTransform {
-    fromDoc: any;
-    toDoc: any;
+    fromDoc: Node;
+    toDoc: Node;
     complexSteps: boolean;
     wordDiffs: boolean;
-    schema: any;
-    tr: any;
-    currentJSON: any;
-    finalJSON: any;
-    ops: any;
+    schema: Schema;
+    tr: Transform;
+    currentJSON: AnyObject;
+    finalJSON: AnyObject;
+    ops: Array<Operation>;
 
-    constructor(fromDoc, toDoc, options: Options = {}) {
+    constructor(fromDoc: Node, toDoc: Node, options: Options = {}) {
         const o = {
             complexSteps: true,
             wordDiffs: false,
@@ -82,32 +87,40 @@ export class RecreateTransform {
         return this.tr;
     }
 
+    /** convert json-diff to prosemirror steps */
     recreateChangeContentSteps() {
         // First step: find content changing steps.
         let ops = [];
         while (this.ops.length) {
-            let op = this.ops.shift(),
-                toDoc = false;
-            const afterStepJSON = JSON.parse(JSON.stringify(this.currentJSON)),
-                pathParts = op.path.split("/");
+            let toDoc;
+            let op = this.ops.shift();
+            const afterStepJSON = cp(this.currentJSON);
+            const pathParts = op.path.split("/");
+
             ops.push(op);
-            while (!toDoc) {
+
+            // collect operations until we receive a valid document
+            while (toDoc == null) {
                 applyPatch(afterStepJSON, [op]);
+
                 try {
                     toDoc = this.schema.nodeFromJSON(afterStepJSON);
-                    // @ts-ignore
                     toDoc.check();
+
                 } catch (error) {
-                    toDoc = false;
-                    if (this.ops.length) {
+                    toDoc = null;
+                    if (this.ops.length > 0) {
                         op = this.ops.shift();
                         ops.push(op);
                     } else {
-                        throw new Error("No valid diff possible!");
+                        throw new Error(`No valid diff possible applying ${op.path}`);
                     }
                 }
             }
 
+            // console.log("op to step", ops);
+
+            // apply the set of operations
             if (this.complexSteps && ops.length === 1 && (pathParts.includes("attrs") || pathParts.includes("type"))) {
                 // Node markup is changing
                 this.addSetNodeMarkup();
@@ -158,24 +171,30 @@ export class RecreateTransform {
 
     // From http://prosemirror.net/examples/footnote/
     addReplaceStep(toDoc, afterStepJSON) {
-        const fromDoc = this.schema.nodeFromJSON(this.currentJSON),
-            step = getReplaceStep(fromDoc, toDoc);
+        const fromDoc = this.schema.nodeFromJSON(this.currentJSON);
+        const step = getReplaceStep(fromDoc, toDoc);
+
         if (!step) {
             return false;
+
         } else if (!this.tr.maybeStep(step).failed) {
             this.currentJSON = afterStepJSON;
-        } else {
-            throw new Error("No valid step found.");
+            return true; // @change previously null
         }
+
+        throw new Error("No valid step found.");
     }
 
+    /** update node with attrs and marks, may also change type */
     addSetNodeMarkup() {
-        const fromDoc = this.schema.nodeFromJSON(this.currentJSON),
-            toDoc = this.schema.nodeFromJSON(this.finalJSON),
-            start = toDoc.content.findDiffStart(fromDoc.content),
-            fromNode = fromDoc.nodeAt(start),
-            toNode = toDoc.nodeAt(start);
+        const fromDoc = this.schema.nodeFromJSON(this.currentJSON);
+        const toDoc = this.schema.nodeFromJSON(this.finalJSON);
+        const start = toDoc.content.findDiffStart(fromDoc.content);
+        const fromNode = fromDoc.nodeAt(start);
+        const toNode = toDoc.nodeAt(start);
+
         if (start != null) {
+            // @todo test this usecase
             this.tr.setNodeMarkup(start, fromNode.type === toNode.type ? null : toNode.type, toNode.attrs, toNode.marks);
             this.currentJSON = this.marklessDoc(this.tr.doc).toJSON();
             // Setting the node markup may have invalidated more ops, so we calculate them again.
@@ -183,22 +202,23 @@ export class RecreateTransform {
         }
     }
 
+    /** perform text diff */
     addReplaceTextSteps(op, afterStepJSON) {
         // We find the position number of the first character in the string
-        const op1 = { ...op, value: "xx" },
-            op2 = { ...op, value: "yy" };
+        const op1 = { ...op, value: "xx" };
+        const op2 = { ...op, value: "yy" };
 
-        const afterOP1JSON = JSON.parse(JSON.stringify(this.currentJSON)),
-            afterOP2JSON = JSON.parse(JSON.stringify(this.currentJSON)),
-            pathParts = op.path.split("/");
+        const afterOP1JSON = cp(this.currentJSON);
+        const afterOP2JSON = cp(this.currentJSON);
+        const pathParts = op.path.split("/");
 
         let obj = this.currentJSON;
 
         applyPatch(afterOP1JSON, [op1]);
         applyPatch(afterOP2JSON, [op2]);
 
-        const op1Doc = this.schema.nodeFromJSON(afterOP1JSON),
-            op2Doc = this.schema.nodeFromJSON(afterOP2JSON);
+        const op1Doc = this.schema.nodeFromJSON(afterOP1JSON);
+        const op2Doc = this.schema.nodeFromJSON(afterOP2JSON);
 
         let offset = op1Doc.content.findDiffStart(op2Doc.content);
         const marks = op1Doc.resolve(offset + 1).marks();
@@ -210,10 +230,12 @@ export class RecreateTransform {
             obj = obj[pathPart];
         }
 
-        const finalText = op.value,
-            currentText = obj;
+        const finalText = op.value;
+        const currentText = obj;
 
-        const textDiffs = this.wordDiffs ? diffWordsWithSpace(currentText, finalText) : diffChars(currentText, finalText);
+        const textDiffs = this.wordDiffs ?
+            diffWordsWithSpace(currentText, finalText) :
+            diffChars(currentText, finalText);
 
         while (textDiffs.length) {
             const diff = textDiffs.shift();
@@ -257,14 +279,15 @@ export class RecreateTransform {
             return;
         }
 
-        const newTr = new Transform(this.tr.docs[0]),
-            oldSteps = this.tr.steps.slice();
+        const newTr = new Transform(this.tr.docs[0]);
+        const oldSteps = this.tr.steps.slice();
+
         while (oldSteps.length) {
             let step = oldSteps.shift();
             while (oldSteps.length && step.merge(oldSteps[0])) {
                 const addedStep = oldSteps.shift();
                 if (step instanceof ReplaceStep && addedStep instanceof ReplaceStep) {
-                    step = getReplaceStep(newTr.doc, addedStep.apply(step.apply(newTr.doc).doc).doc);
+                    step = getReplaceStep(newTr.doc, addedStep.apply(step.apply(newTr.doc).doc).doc) as Step<any>;
                 } else {
                     step = step.merge(addedStep);
                 }
