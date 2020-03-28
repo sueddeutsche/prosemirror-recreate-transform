@@ -21,12 +21,14 @@ export declare class RecreateTransform {
     /** convert json-diff to prosemirror steps */
     recreateChangeContentSteps(): void;
     recreateChangeMarkSteps(): void;
-    marklessDoc(doc: any): Node<any>;
-    addReplaceStep(toDoc: any, afterStepJSON: any): boolean;
+    /**
+     * retrieve and possibly apply replace-step based from doc changes
+     * From http://prosemirror.net/examples/footnote/
+     */
+    addReplaceStep(toDoc: Node, afterStepJSON: AnyObject): boolean;
     /** update node with attrs and marks, may also change type */
     addSetNodeMarkup(): void;
-    /** perform text diff */
+    /** retrieve and possibly apply text replace-steps based from doc changes */
     addReplaceTextSteps(op: any, afterStepJSON: any): void;
-    simplifyTr(): void;
 }
-export declare function recreateTransform(fromDoc: any, toDoc: any, options?: Options): Transform<any>;
+export declare function recreateTransform(fromDoc: Node, toDoc: Node, options?: Options): Transform;

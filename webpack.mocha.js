@@ -4,7 +4,7 @@ const ROOT = __dirname;
 const WebpackShellPlugin = require("webpack-shell-plugin-next");
 const glob = require("glob");
 
-const IN_WATCH_MODE = process.argv.find(arg => arg === "--watch" || arg === "-w") != null;
+const IN_WATCH_MODE = process.argv.some(arg => arg === "--watch" || arg === "-w");
 
 
 const config = {
