@@ -11,7 +11,7 @@ function testRecreate(startDoc, endDoc, steps = [], options: Options = {}) {
     );
 }
 
-describe.only("recreateTransform - node attrs", () => {
+describe("recreateTransform - node attrs", () => {
     it("should update node attrs", () => {
         testRecreate(
             doc(node("widget_a", { first: "", aSecond: "" })),
