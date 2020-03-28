@@ -12,7 +12,7 @@ const config = {
     target: "web",
     devtool: "source-map",
     output: {
-        filename: "[name].js",
+        filename: "recreateTransform.js",
         path: path.resolve(__dirname, PRODUCTION ? "dist" : "dev")
         // library: "recreateTransform",
         // libraryTarget: "umd"

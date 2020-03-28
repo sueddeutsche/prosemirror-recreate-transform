@@ -121,7 +121,7 @@ describe("recreateTransform - node attrs", () => {
         );
     });
 
-    it("should update node attrs and type, when changing", () => {
+    it("should update node attrs and type, when changing position", () => {
         testRecreate(
             doc(p(t("Lorem Ipsum")), p(t("Dolor sit")), node("widget_a", { first: "a-first", aSecond: "a-second" })),
             doc(p(t("Dolor sit")), node("widget_b", { first: "b-first", bSecond: "b-second", third: "b-third" })),
