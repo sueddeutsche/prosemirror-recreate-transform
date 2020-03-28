@@ -24,12 +24,6 @@ Thumbs.db
 /coverage
 node_modules
 
-# Terraform
-.terraform
-override.tf
-override.tfvars
-override.auto.tfvars
-
 # Repository specific
 /artifact
 /dev
