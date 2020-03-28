@@ -2,9 +2,9 @@
     "name": "@technik-sde/prosemirror-recreate-transform",
     "version": "0.1.0",
     "description": "Find and merge changes between two prosemirror documents without access to the steps.",
-    "main": "src/recreateTransform.ts",
-    "module": "src/recreateTransform.ts",
-    "types": "dist/src/recreateTransform.d.ts",
+    "main": "src/index.ts",
+    "module": "src/index.ts",
+    "types": "dist/src/index.d.ts",
     "engines": {
         "node": ">=10.0.0"
     },

@@ -5,7 +5,7 @@ const PRODUCTION = process.argv.some(arg => arg === "-p" || arg === "--productio
 const config = {
 
     entry: [
-        "./src/recreateTransform.ts"
+        "./src/index.ts"
     ],
     mode: PRODUCTION ? "production" : "development",
     context: __dirname,
