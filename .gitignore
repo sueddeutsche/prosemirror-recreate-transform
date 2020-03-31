@@ -1,7 +1,31 @@
-node_modules/
-demo/merge/index-build.js
-demo/merge2/index-build.js
-demo/history/index-build.js
-dist/
-.nyc_output
-coverage
+# General
+*.log
+*.pid
+*.tmp
+.DS_Store
+Thumbs.db
+
+# JetBrains
+.idea/
+/.project
+**___jb_tmp___
+*.iml
+
+# Visual Studio Code
+/.vscode
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# Node.js
+/.cache
+/.nyc_output
+/coverage
+node_modules
+
+# Repository specific
+/artifact
+/dev
+/testbuild
+/ts
