@@ -1,7 +1,7 @@
 {
     "name": "@technik-sde/prosemirror-recreate-transform",
     "version": "0.1.0",
-    "description": "Find and merge changes between two prosemirror documents without access to the steps.",
+    "description": "Create a set of steps transforming one prosemirror json document to another",
     "main": "src/index.ts",
     "module": "dist/recreateTransform.js",
     "types": "dist/src/index.d.ts",
