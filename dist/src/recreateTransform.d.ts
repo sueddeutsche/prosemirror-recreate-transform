@@ -5,12 +5,14 @@ import { AnyObject } from "./types";
 export interface Options {
     complexSteps?: boolean;
     wordDiffs?: boolean;
+    simplifyDiff?: boolean;
 }
 export declare class RecreateTransform {
     fromDoc: Node;
     toDoc: Node;
     complexSteps: boolean;
     wordDiffs: boolean;
+    simplifyDiff: boolean;
     schema: Schema;
     tr: Transform;
     currentJSON: AnyObject;
@@ -20,14 +22,14 @@ export declare class RecreateTransform {
     init(): Transform<any>;
     /** convert json-diff to prosemirror steps */
     recreateChangeContentSteps(): void;
+    /** update node with attrs and marks, may also change type */
+    addSetNodeMarkup(): boolean;
     recreateChangeMarkSteps(): void;
     /**
      * retrieve and possibly apply replace-step based from doc changes
      * From http://prosemirror.net/examples/footnote/
      */
     addReplaceStep(toDoc: Node, afterStepJSON: AnyObject): boolean;
-    /** update node with attrs and marks, may also change type */
-    addSetNodeMarkup(): void;
     /** retrieve and possibly apply text replace-steps based from doc changes */
     addReplaceTextSteps(op: any, afterStepJSON: any): void;
 }

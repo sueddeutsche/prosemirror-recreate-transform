@@ -1,9 +1,42 @@
 {
-    "extends": "@technik-sde/eslint-config-sz.cms/node-ts",
+    "extends": [
+        "eslint:recommended",
+        "plugin:@typescript-eslint/eslint-recommended",
+        "plugin:@typescript-eslint/recommended"
+    ],
+    "parser": "@typescript-eslint/parser",
+    "plugins": [
+        "@typescript-eslint",
+        "array-func",
+        "node",
+        "optimize-regex",
+        "promise"
+    ],
+
+    "parserOptions": {
+        "ecmaVersion": 2018,
+        "sourceType": "module"
+    },
+
     "env": {
+        "es6": true,
+        "node": true,
         "mocha": true
     },
+
+    "settings": {
+        "node": {
+            "tryExtensions": [
+                ".js",
+                ".json",
+                ".ts"
+            ]
+        }
+    },
+
     "rules": {
-        "no-console": "off"
+        "no-console": "off",
+        "@typescript-eslint/explicit-function-return-type": "off",
+        "@typescript-eslint/ban-ts-ignore": "off"
     }
 }

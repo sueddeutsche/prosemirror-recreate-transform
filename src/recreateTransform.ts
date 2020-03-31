@@ -17,6 +17,9 @@ export interface Options {
 }
 
 
+// const logStyle = "color: #fff; background: #333; padding: 2px;";
+
+
 export class RecreateTransform {
     fromDoc: Node;
     toDoc: Node;
@@ -56,8 +59,6 @@ export class RecreateTransform {
             this.currentJSON = removeMarks(this.fromDoc).toJSON();
             this.finalJSON = removeMarks(this.toDoc).toJSON();
             this.ops = createPatch(this.currentJSON, this.finalJSON);
-            console.log(copy(this.currentJSON), copy(this.finalJSON));
-            console.log("ops", JSON.stringify(this.ops, null, 2));
             this.recreateChangeContentSteps();
             this.recreateChangeMarkSteps();
 
@@ -70,7 +71,6 @@ export class RecreateTransform {
         }
 
         if (this.simplifyDiff) {
-            console.log("%cSimplify Transaction", "background-color: yellow;");
             this.tr = simplifyTransform(this.tr) || this.tr;
         }
 
@@ -112,22 +112,23 @@ export class RecreateTransform {
                 }
             }
 
-            console.log("apply", ops);
-
             // apply operation (ignoring afterStepJSON)
             if (this.complexSteps && ops.length === 1 && (pathParts.includes("attrs") || pathParts.includes("type"))) {
                 // Node markup is changing
                 this.addSetNodeMarkup(); // a lost update is ignored
                 ops = [];
+                // console.log("%cop", logStyle, "- update node", ops);
 
             } else if (ops.length === 1 && op.op === "replace" && pathParts[pathParts.length - 1] === "text") {
                 // Text is being replaced, we apply text diffing to find the smallest possible diffs.
                 this.addReplaceTextSteps(op, afterStepJSON);
                 ops = [];
+                // console.log("%cop", logStyle, "- replace", ops);
 
             } else if (this.addReplaceStep(toDoc, afterStepJSON)) {
                 // operations have been applied
                 ops = [];
+                // console.log("%cop", logStyle, "- other", ops);
             }
         }
     }
@@ -145,6 +146,7 @@ export class RecreateTransform {
         const toNode = toDoc.nodeAt(start);
 
         if (start != null) {
+            // @note this completly updates all attributes in one step, by completely replacing node
             const nodeType = fromNode.type === toNode.type ? null : toNode.type;
             this.tr.setNodeMarkup(start, nodeType, toNode.attrs, toNode.marks);
             this.currentJSON = removeMarks(this.tr.doc).toJSON();

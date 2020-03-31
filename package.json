@@ -3,7 +3,7 @@
     "version": "0.1.0",
     "description": "Find and merge changes between two prosemirror documents without access to the steps.",
     "main": "src/index.ts",
-    "module": "src/index.ts",
+    "module": "dist/recreateTransform.js",
     "types": "dist/src/index.d.ts",
     "engines": {
         "node": ">=10.0.0"
@@ -34,7 +34,6 @@
         "rfc6902": "^3.0.4"
     },
     "devDependencies": {
-        "@technik-sde/eslint-config-sz.cms": "^5.0.0",
         "@types/mocha": "^7.0.2",
         "@typescript-eslint/eslint-plugin": "^2.25.0",
         "@typescript-eslint/parser": "^2.25.0",
