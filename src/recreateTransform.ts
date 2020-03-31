@@ -13,6 +13,7 @@ import { copy } from "./copy";
 export interface Options {
     complexSteps?: boolean;
     wordDiffs?: boolean;
+    simplifyDiff?: boolean;
 }
 
 
@@ -21,6 +22,7 @@ export class RecreateTransform {
     toDoc: Node;
     complexSteps: boolean;
     wordDiffs: boolean;
+    simplifyDiff: boolean;
     schema: Schema;
     tr: Transform;
     /* current working document data, may get updated while recalculating node steps */
@@ -33,6 +35,7 @@ export class RecreateTransform {
         const o = {
             complexSteps: true,
             wordDiffs: false,
+            simplifyDiff: true,
             ...options
         };
 
@@ -40,6 +43,7 @@ export class RecreateTransform {
         this.toDoc = toDoc;
         this.complexSteps = o.complexSteps; // Whether to return steps other than ReplaceSteps
         this.wordDiffs = o.wordDiffs; // Whether to make text diffs cover entire words
+        this.simplifyDiff = o.simplifyDiff;
         this.schema = fromDoc.type.schema;
         this.tr = new Transform(fromDoc);
     }
@@ -52,6 +56,8 @@ export class RecreateTransform {
             this.currentJSON = removeMarks(this.fromDoc).toJSON();
             this.finalJSON = removeMarks(this.toDoc).toJSON();
             this.ops = createPatch(this.currentJSON, this.finalJSON);
+            console.log(copy(this.currentJSON), copy(this.finalJSON));
+            console.log("ops", JSON.stringify(this.ops, null, 2));
             this.recreateChangeContentSteps();
             this.recreateChangeMarkSteps();
 
@@ -63,7 +69,11 @@ export class RecreateTransform {
             this.recreateChangeContentSteps();
         }
 
-        this.tr = simplifyTransform(this.tr) || this.tr;
+        if (this.simplifyDiff) {
+            console.log("%cSimplify Transaction", "background-color: yellow;");
+            this.tr = simplifyTransform(this.tr) || this.tr;
+        }
+
         return this.tr;
     }
 
@@ -101,6 +111,8 @@ export class RecreateTransform {
                     }
                 }
             }
+
+            console.log("apply", ops);
 
             // apply operation (ignoring afterStepJSON)
             if (this.complexSteps && ops.length === 1 && (pathParts.includes("attrs") || pathParts.includes("type"))) {
