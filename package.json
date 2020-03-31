@@ -1,58 +1,58 @@
 {
-    "name": "@technik-sde/prosemirror-recreate-transform",
-    "version": "0.1.0",
-    "description": "Create a set of steps transforming one prosemirror json document to another",
-    "main": "dist/recreateTransform.js",
-    "module": "dist/recreateTransform.js",
-    "types": "dist/src/index.d.ts",
-    "engines": {
-        "node": ">=10.0.0"
-    },
-    "repository": "",
-    "scripts": {
-        "build": "rm -rf dev; webpack",
-        "dist": "rm -rf dist; webpack -p",
-        "lint": "eslint --ext .js,.ts src",
-        "test": "webpack --config webpack.mocha.js --display errors-only",
-        "test:watch": "webpack --watch --config webpack.mocha.js --display minimal",
-        "prepublishOnly": "npm run test && npm run dist"
-    },
-    "keywords": [
-        "prosemirror",
-        "change",
-        "tracking",
-        "merging",
-        "diffing"
-    ],
-    "author": "",
-    "license": "Apache-2.0",
-    "dependencies": {
-        "@types/prosemirror-model": "^1.5.0",
-        "@types/prosemirror-transform": "^1.1.0",
-        "diff": "^4.0.2",
-        "prosemirror-model": "^1.9.1",
-        "prosemirror-transform": "^1.2.4",
-        "rfc6902": "^3.0.4"
-    },
-    "devDependencies": {
-        "@types/mocha": "^7.0.2",
-        "@typescript-eslint/eslint-plugin": "^2.25.0",
-        "@typescript-eslint/parser": "^2.25.0",
-        "eslint": "^6.8.0",
-        "eslint-plugin-array-func": "^3.1.4",
-        "eslint-plugin-ava": "^10.2.0",
-        "eslint-plugin-node": "^11.0.0",
-        "eslint-plugin-optimize-regex": "^1.1.7",
-        "eslint-plugin-promise": "^4.2.1",
-        "glob": "^7.1.6",
-        "jsdom": "^16.2.1",
-        "mocha": "^7.1.1",
-        "prosemirror-test-builder": "^1.0.1",
-        "source-map-support": "^0.5.16",
-        "ts-loader": "^6.2.2",
-        "typescript": "^3.8.3",
-        "webpack": "^4.42.1",
-        "webpack-cli": "^3.3.11",
-        "webpack-shell-plugin-next": "^1.1.7"
-    }
+  "name": "@technik-sde/prosemirror-recreate-transform",
+  "version": "1.0.0",
+  "description": "Create a set of steps transforming one prosemirror json document to another",
+  "main": "dist/recreateTransform.js",
+  "module": "dist/recreateTransform.js",
+  "types": "dist/src/index.d.ts",
+  "engines": {
+    "node": ">=10.0.0"
+  },
+  "repository": "",
+  "scripts": {
+    "build": "rm -rf dev; webpack",
+    "dist": "rm -rf dist; webpack -p",
+    "lint": "eslint --ext .js,.ts src",
+    "test": "webpack --config webpack.mocha.js --display errors-only",
+    "test:watch": "webpack --watch --config webpack.mocha.js --display minimal",
+    "prepublishOnly": "npm run test && npm run dist"
+  },
+  "keywords": [
+    "prosemirror",
+    "change",
+    "tracking",
+    "merging",
+    "diffing"
+  ],
+  "author": "",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "@types/prosemirror-model": "^1.5.0",
+    "@types/prosemirror-transform": "^1.1.0",
+    "diff": "^4.0.2",
+    "prosemirror-model": "^1.9.1",
+    "prosemirror-transform": "^1.2.4",
+    "rfc6902": "^3.0.4"
+  },
+  "devDependencies": {
+    "@types/mocha": "^7.0.2",
+    "@typescript-eslint/eslint-plugin": "^2.25.0",
+    "@typescript-eslint/parser": "^2.25.0",
+    "eslint": "^6.8.0",
+    "eslint-plugin-array-func": "^3.1.4",
+    "eslint-plugin-ava": "^10.2.0",
+    "eslint-plugin-node": "^11.0.0",
+    "eslint-plugin-optimize-regex": "^1.1.7",
+    "eslint-plugin-promise": "^4.2.1",
+    "glob": "^7.1.6",
+    "jsdom": "^16.2.1",
+    "mocha": "^7.1.1",
+    "prosemirror-test-builder": "^1.0.1",
+    "source-map-support": "^0.5.16",
+    "ts-loader": "^6.2.2",
+    "typescript": "^3.8.3",
+    "webpack": "^4.42.1",
+    "webpack-cli": "^3.3.11",
+    "webpack-shell-plugin-next": "^1.1.7"
+  }
 }
