@@ -14,7 +14,8 @@
         "dist": "rm -rf dist; webpack -p",
         "lint": "eslint --ext .js,.ts src",
         "test": "webpack --config webpack.mocha.js --display errors-only",
-        "test:watch": "webpack --watch --config webpack.mocha.js --display minimal"
+        "test:watch": "webpack --watch --config webpack.mocha.js --display minimal",
+        "prepublishOnly": "npm run test && npm run dist"
     },
     "keywords": [
         "prosemirror",
