@@ -1,19 +1,20 @@
 {
     "compilerOptions": {
-        "declaration": true,
-        "outDir": "./dist/",
-        "module": "es2015",
-        "target": "es2015",
         "allowJs": true,
-        "resolveJsonModule": true,
         "allowSyntheticDefaultImports": true,
+        "declaration": true,
         "downlevelIteration": true,
         "esModuleInterop": true,
-        "moduleResolution": "node",
         "lib": [
             "DOM",
             "ES2018"
-        ]
+        ],
+        "module": "es2015",
+        "moduleResolution": "node",
+        "outDir": "./dist/",
+        "resolveJsonModule": true,
+        "sourceMap": true,
+        "target": "es2015"
     },
     "include": [
         "src/**/*",

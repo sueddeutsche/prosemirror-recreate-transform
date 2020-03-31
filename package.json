@@ -1,6 +1,6 @@
 {
   "name": "@technik-sde/prosemirror-recreate-transform",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Create a set of steps transforming one prosemirror json document to another",
   "main": "dist/recreateTransform.js",
   "module": "dist/recreateTransform.js",
@@ -49,6 +49,7 @@
     "mocha": "^7.1.1",
     "prosemirror-test-builder": "^1.0.1",
     "source-map-support": "^0.5.16",
+    "terser-webpack-plugin": "^2.3.5",
     "ts-loader": "^6.2.2",
     "typescript": "^3.8.3",
     "webpack": "^4.42.1",
