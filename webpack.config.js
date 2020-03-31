@@ -9,13 +9,13 @@ const config = {
     ],
     mode: PRODUCTION ? "production" : "development",
     context: __dirname,
-    target: "web",
+    target: "node",
     devtool: "source-map",
     output: {
         filename: "recreateTransform.js",
-        path: path.resolve(__dirname, PRODUCTION ? "dist" : "dev")
-        // library: "recreateTransform",
-        // libraryTarget: "umd"
+        path: path.resolve(__dirname, PRODUCTION ? "dist" : "dev"),
+        library: "recreateTransform",
+        libraryTarget: "umd"
     },
 
     resolve: {
