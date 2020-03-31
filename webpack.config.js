@@ -1,12 +1,10 @@
+const TerserPlugin = require("terser-webpack-plugin");
 const path = require("path");
 const PRODUCTION = process.argv.some(arg => arg === "-p" || arg === "--production");
 
 
 const config = {
-
-    entry: [
-        "./src/index.ts"
-    ],
+    entry: ["./src/index.ts"],
     mode: PRODUCTION ? "production" : "development",
     context: __dirname,
     target: "node",
@@ -35,8 +33,18 @@ const config = {
                 }
             }
         ]
+    },
+
+    optimization: {
+        minimize: true,
+        minimizer: [
+            new TerserPlugin({
+                terserOptions: {
+                    "keep_fnames": true
+                }
+            })
+        ]
     }
 };
-
 
 module.exports = config;
