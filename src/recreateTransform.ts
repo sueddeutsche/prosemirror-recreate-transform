@@ -148,7 +148,18 @@ export class RecreateTransform {
         if (start != null) {
             // @note this completly updates all attributes in one step, by completely replacing node
             const nodeType = fromNode.type === toNode.type ? null : toNode.type;
-            this.tr.setNodeMarkup(start, nodeType, toNode.attrs, toNode.marks);
+            try {
+                this.tr.setNodeMarkup(start, nodeType, toNode.attrs, toNode.marks);
+            } catch (e) {
+                // if nodetypes differ, the updated node-type and contents might not be compatible
+                // with schema and requires a replace
+                if (nodeType && e.message.includes("Invalid content")) {
+                    // @todo add test-case for this scenario
+                    this.tr.replaceWith(start, start + fromNode.nodeSize, toNode);
+                } else {
+                    throw e;
+                }
+            }
             this.currentJSON = removeMarks(this.tr.doc).toJSON();
             // setting the node markup may have invalidated the following ops, so we calculate them again.
             this.ops = createPatch(this.currentJSON, this.finalJSON);
