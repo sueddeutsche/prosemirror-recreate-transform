@@ -1,6 +1,6 @@
 {
   "name": "@technik-sde/prosemirror-recreate-transform",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "description": "Create a set of steps transforming one prosemirror json document to another",
   "main": "dist/recreateTransform.js",
   "module": "dist/recreateTransform.js",
