@@ -44,6 +44,11 @@ const config = {
                 }
             })
         ]
+    },
+
+    externals: {
+        'prosemirror-model': 'prosemirror-model',
+        'prosemirror-transform': 'prosemirror-transform'
     }
 };
 
