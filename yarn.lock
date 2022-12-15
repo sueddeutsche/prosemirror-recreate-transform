@@ -3583,10 +3583,10 @@ ret@~0.1.10:
   resolved "https://registry.npmjs.org/ret/-/ret-0.1.15.tgz#b8a4825d5bdb1fc3f6f53c2bc33f81388681c7bc"
   integrity sha512-TTlYpa+OL+vMMNG24xSlQGEJ3B/RzEfUlLct7b5G/ytav+wPrplCpVMFuwzXbkecJrb6IYo1iFb0S9v37754mg==
 
-rfc6902@^3.0.4:
-  version "3.0.4"
-  resolved "https://registry.npmjs.org/rfc6902/-/rfc6902-3.0.4.tgz#82965f13536fd20cb7799ce0376e9ce7cd3ebfe6"
-  integrity sha512-OnzreaZXrwT5w2ikKXWr5QcuI7NZpL+J3hIkAwozjOnKVUL7fPsB8Vcmu8YBiiou1/r3V0Jc0T1uQDyfAPvLzA==
+rfc6902@^5.0.0:
+  version "5.0.0"
+  resolved "https://registry.yarnpkg.com/rfc6902/-/rfc6902-5.0.0.tgz#cb53ac1cb8a700edc1ddc6c19afbb93422f9e385"
+  integrity sha512-6d0Q7DgN+RWHhvY/jb7QWG6ol+XreFqQn4NzvHB8CSALA70fRLRmbJaMvxlFf/JIzfkiNWq0lQF0l5yWb4yuLA==
 
 rimraf@2.6.3:
   version "2.6.3"
